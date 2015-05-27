@@ -1,0 +1,1 @@
+./build.sh && python -m SimpleHTTPServer
