@@ -7,7 +7,6 @@
 'use strict';
 
 
-
 var brwsr = function(obj) {
     var _brwsr = {
         _target: obj,
@@ -89,7 +88,9 @@ module GameViews {
 
         private game;
 
-        private _listeners = {};
+        events = {
+            TICK: new _Event._Event<void>()
+        };
 
         constructor(game: GameModule.Game) {
             this.lastTime = (new Date()).getTime();
@@ -98,10 +99,6 @@ module GameViews {
                 10
                 );
             this.game = game;
-
-            Object.keys(events).forEach(function(e) {
-                this._listeners[events[e]] = [];
-            }.bind(this));
         }
 
         private loop() {
@@ -110,17 +107,7 @@ module GameViews {
             this.lastTime = nowTime;
 
             this.game.update(delta);
-            this.dispatchEvent(events.TICK, {});
-        }
-
-        addEventListener(eventName, cb) {
-            this._listeners[eventName].push(cb);
-        }
-
-        dispatchEvent(eventName, message?: any) {
-            this._listeners[eventName].forEach(function(cb) {
-                cb(message || {});
-            });
+            this.events.TICK.emit(null);
         }
     }
 
@@ -197,7 +184,7 @@ module GameViews {
            };
        },
        function mainController(methods, services){
-           services.game.addEventListener(GameModule.events.NEW_DIRECTION, function(e) {
+           services.game.events.NEW_DIRECTION.listen(function(e) {
                methods.newDirection(e.oldDirection, ColourWrapper.hslFromSeed(Math.random(), services.game.colourModels[services.game.currentDirection]));
            });
 
@@ -319,10 +306,10 @@ module GameViews {
             }
         },
         function directionController(methods, services) {
-            services.game.addEventListener(GameModule.events.NEW_DIRECTION, function(e) {
+            services.game.events.NEW_DIRECTION.listen(function(e) {
                 methods.rightMoveExplodeDirection(services.game.currentDirection);
             });
-            services.game.addEventListener(GameModule.events.WRONG_MOVE, function(e) {
+            services.game.events.WRONG_MOVE.listen(function(e) {
                 methods.wrongMoveImplodeDirection(services.game.currentDirection);
             });
         }        
@@ -364,8 +351,8 @@ module GameViews {
                 methods.refreshScore(e.change);
             }
 
-            services.game.addEventListener(GameModule.events.POINTS_DEDUCTED, refreshScore);
-            services.game.addEventListener(GameModule.events.POINTS_GAINED, refreshScore);
+            services.game.events.POINTS_DEDUCTED.listen(refreshScore);
+            services.game.events.POINTS_GAINED.listen(refreshScore);
         }
     )(servicesPackage);
 
@@ -388,7 +375,7 @@ module GameViews {
             };
         },
         function timerComponent(methods, services) {
-            services.mainLoop.addEventListener(events.TICK, () => {
+            services.mainLoop.events.TICK.listen(() => {
                 methods.updateTimer(services.game.timeLeft);
             });
         }

@@ -1,4 +1,6 @@
 
+/// <reference path="event.ts" />
+
 module GameModule {
 
     
@@ -27,14 +29,6 @@ module GameModule {
         }
     }
 
-    export enum events {
-        NEW_DIRECTION,
-        WRONG_MOVE,
-        RIGHT_MOVE,
-        POINTS_DEDUCTED,
-        POINTS_GAINED,
-    };
-
     export class Game {
 
         colourModels: any;
@@ -42,7 +36,20 @@ module GameModule {
         points: number = 0;
         timeLeft: number = 100;
 
-        private _listeners = {};
+        events = {
+            NEW_DIRECTION: new _Event._Event<{
+                    oldDirection: string,
+                    newDirection: string
+                }>(),
+            WRONG_MOVE: new _Event._Event<void>(),
+            RIGHT_MOVE: new _Event._Event<void>(),
+            POINTS_DEDUCTED: new _Event._Event<{
+                    change: number
+                }>(),
+            POINTS_GAINED: new _Event._Event<{
+                    change: number
+                }>()
+        }
 
         static directions = {
             left: 'left',
@@ -78,10 +85,6 @@ module GameModule {
             this.colourModels = options.colourModel;
 
             this.currentDirection = this.nextDirection();
-
-            Object.keys(events).forEach(function(e) {
-                this._listeners[events[e]] = [];
-            }.bind(this));
         }
 
         update(timeDelta) {
@@ -97,18 +100,18 @@ module GameModule {
         };
 
         wrongMove() {
-            this.dispatchEvent(events.WRONG_MOVE);
+            this.events.WRONG_MOVE.emit(null);
             this.points -= 2;
-            this.dispatchEvent(events.POINTS_DEDUCTED, {
+            this.events.POINTS_DEDUCTED.emit({
                 change: -2
             });
         };
 
         rightMove() {
             this.timeLeft = 100;
-            this.dispatchEvent(events.RIGHT_MOVE);
+            this.events.RIGHT_MOVE.emit(null);
             this.points += 1;
-            this.dispatchEvent(events.POINTS_GAINED, {
+            this.events.POINTS_GAINED.emit({
                 change: 1
             });
         }
@@ -122,7 +125,7 @@ module GameModule {
             this.rightMove();
 
             this.currentDirection = this.nextDirection();
-            this.dispatchEvent(events.NEW_DIRECTION, {
+            this.events.NEW_DIRECTION.emit({
                 oldDirection: direction,
                 newDirection: this.currentDirection
             });
@@ -130,14 +133,5 @@ module GameModule {
             return true;
         }
 
-        addEventListener(eventName, cb) {
-            this._listeners[eventName].push(cb);
-        }
-
-        dispatchEvent(eventName, message ?: any) {
-            this._listeners[eventName].forEach(function(cb) {
-                cb(message || {});
-            });
-        }
     }
 }
