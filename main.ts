@@ -45,7 +45,7 @@ var Surface = {
 
         return surface;
     },
-    move: function(_Surface, direction, callbacks) {
+    move: function(_Surface, direction, callbacks, transitionLength=250) {
         if (['left', 'right', 'up', 'down'].indexOf(direction) === -1) {
             throw new Error('Direction is invalid');
         }
@@ -58,8 +58,16 @@ var Surface = {
         callbacks = callbacks || {};
         callbacks.end = callbacks.end || noop;
 
-        //TODO(wg): dangerous, transitionend is very bad at firing
-        _Surface.addEventListener('transitionend', callbacks.end);
+        //It is very unfortunate that we cannot do the following:
+        //    _Surface.addEventListener('transitionend', callbacks.end);
+        //But browsers have spotty support for the transitionend event, and if we purely relied on that event to fire then
+        //there can be plenty of opportunities where it will not and the element will be stuck in a state which it should not be in.
+        //Examples include switching to another tab, down to just not using the right phone.
+        //
+        //As a result we are just using a timeout to simulate the event to cover our bases, blame the browsers.
+        //
+        //TODO(wg): Make sure this is still relevant and that we can't just use the event.
+        setTimeout(callbacks.end, transitionLength);
 
         _Surface.classList.add(direction);
     },
@@ -71,10 +79,8 @@ var Surface = {
 }
 
 module GameViews {
-    var game = new GameModule.Game();
-
     export enum events {
-            TICK
+        TICK
     };
 
     class MainLoop {
@@ -90,13 +96,13 @@ module GameViews {
             this.mainInterval = setInterval(
                 this.loop.bind(this),
                 10
-            );        
+                );
             this.game = game;
 
             Object.keys(events).forEach(function(e) {
                 this._listeners[events[e]] = [];
             }.bind(this));
-        }    
+        }
 
         private loop() {
             let nowTime = (new Date()).getTime();
@@ -105,52 +111,52 @@ module GameViews {
 
             this.game.update(delta);
             this.dispatchEvent(events.TICK, {});
-        }    
+        }
 
         addEventListener(eventName, cb) {
             this._listeners[eventName].push(cb);
         }
 
-        dispatchEvent(eventName, message ?: any) {
+        dispatchEvent(eventName, message?: any) {
             this._listeners[eventName].forEach(function(cb) {
                 cb(message || {});
             });
         }
     }
 
+    let game = new GameModule.Game();
     let mainLoop = new MainLoop(game);
 
-    //TODO(wg): on second thought it is dumb to have this as a class, it doesn't have a real lifetime, it's
-    //just made and then render() is called immediately, make a factory function that takes
-    //functions as parameters
-    
-/*
+    interface SimpleServicePackage {
+        game: GameModule.Game;
+        mainLoop: MainLoop
+    }
+
+    let servicesPackage: SimpleServicePackage = {
+        game,
+        mainLoop
+    };
+
+    /***/
+
     interface TemplateResult<T> {
         element: HTMLElement;
         methods: T;
     }
 
-    function myView() {
-        let d = document.createElement('div')
-
-        let methods = {};
-
-        return {
-            element: d,
-            methods
-        };
-    }
-
-    function Component<T>(
-        View: () => TemplateResult<T>,
-        controllerBody: (methods: any) => void,
-        services
+    function Component<T, U>(
+        View: (initialBindings ?: any) => TemplateResult<T>,
+        controllerBody ?: (methods, services ?: U) => void,
+        initialBindings ?: (services ?: U) => any
     ){
-        return (services) => {
-            return (children) => {
-                let template = View(services?);
+        return (services : U) => {
+            return (...children: HTMLElement[]) => {
+                let _initialBindings = initialBindings ? initialBindings(services) : null;
+                let template = View(_initialBindings);
 
-                controllerBody(template.methods, services);
+                if (controllerBody) { 
+                    controllerBody(template.methods, services);
+                }
 
                 children.forEach((child) => {
                     template.element.appendChild(child);
@@ -159,163 +165,120 @@ module GameViews {
                 return template.element;
             };
         }
-    }
+    }   
 
-    let mainComponent = Component(
-        myView,
-        (methods) => {
-            //call methods
-        }
-    )(services);
+   let mainComponent = Component<{
+           newDirection: (oldDirection, newHSL) => void
+   }, SimpleServicePackage>(
+       function mainView(initialBindings) {
+           let element = document.createElement('div');
+           element.id = 'screen';
 
-    let template = mainComponent(
-        osdComponent(,
-            directionsComponent(),
-            scoreComponent(),
-            timerComponent(),
-            touchControlsComponent()
-        )
-    )
+           let surface = Surface.createSurface(ColourWrapper.hslFromSeed(Math.random(), initialBindings.direction));
 
- */
+           element.appendChild(surface);
 
-    class View {
-        protected element: HTMLElement;
-        methods: any;
+           let methods = {
+               newDirection: (oldDirection, newHSL) => {
+                   Surface.move(
+                       surface,
+                       oldDirection,
+                       {
+                           end: function() {
+                               surface = Surface.replaceWithNew(surface, newHSL);
+                           }
+                       });
+               }
+           }
 
-        constructor(children: HTMLElement[]) {
-            this.element = this.construct(children);
-            children.forEach((child) => {
-                this.element.appendChild(child);
-            });
-        }
+           return {
+               element,
+               methods
+           };
+       },
+       function mainController(methods, services){
+           services.game.addEventListener(GameModule.events.NEW_DIRECTION, function(e) {
+               methods.newDirection(e.oldDirection, ColourWrapper.hslFromSeed(Math.random(), services.game.colourModels[services.game.currentDirection]));
+           });
 
-        construct(children : HTMLElement[] = []): HTMLElement {
-            throw new Error('Abstract method: you have to override this method.');
-        };
+           f.n(document.getElementsByTagName('body')).forEach(function(elem) {
+               var currentKeyDown;
+               elem.addEventListener('keydown', function(e) {
+                   var direction;
+                   switch (e.keyCode) {
+                       case 37:
+                           direction = GameModule.Game.directions.left;
+                           break; 
+                       case 38:
+                           direction = GameModule.Game.directions.up;
+                           break;
+                       case 39:
+                           direction = GameModule.Game.directions.right;
+                           break;
+                       case 40:
+                           direction = GameModule.Game.directions.down;
+                           break;
+                   }
+                   if (direction && currentKeyDown === null) {
+                       currentKeyDown = direction;
 
-        render(bindings ?: any) {
-            return this.element;
-        }
-    }
+                       services.game.makeMove(direction);
+                   }
+               });
 
-    class Component {
-        protected children;
-        constructor(children ?: HTMLElement[]) {
-            this.children = children;
-        }
-        load(): HTMLElement {
-            throw new Error('Abstract method: you have to override this method.');
-        };
-    }
+               elem.addEventListener('keyup', function(e) {
+                   currentKeyDown = null;
+               });
+           });
+       },
+       function initialBindings(services) {
+           return {
+               direction: services.game.colourModels[services.game.currentDirection]
+            };
+       }
+   )(servicesPackage);
 
-
-    class mainView extends View {
-        construct(children : HTMLElement[] = []) {
-            let element = document.createElement('div');
-            element.id = 'screen';
-
-            let surface = Surface.createSurface(ColourWrapper.hslFromSeed(Math.random(), game.colourModels[game.currentDirection]));
-
-            element.appendChild(surface);
-
-            this.gameControls();
-
-            //TODO(wg): move this to controller/component
-            game.addEventListener(GameModule.events.NEW_DIRECTION, function(e) {
-                Surface.move(
-                    surface,
-                    e.oldDirection,
-                    {
-                        end: function() {
-                            surface = Surface.replaceWithNew(surface, ColourWrapper.hslFromSeed(Math.random(), game.colourModels[game.currentDirection]));
-                        }
-                    });
-            });
-
-            return element;
-        }
-
-        private gameControls() {
-            f.n(document.getElementsByTagName('body')).forEach(function(elem) {
-                var currentKeyDown;
-                elem.addEventListener('keydown', function(e) {
-                    var direction;
-                    switch (e.keyCode) {
-                        case 37:
-                            direction = GameModule.Game.directions.left;
-                            break;
-                        case 38:
-                            direction = GameModule.Game.directions.up;
-                            break;
-                        case 39:
-                            direction = GameModule.Game.directions.right;
-                            break;
-                        case 40:
-                            direction = GameModule.Game.directions.down;
-                            break;
-                    }
-                    if (direction && currentKeyDown === null) {
-                        currentKeyDown = direction;
-
-                        game.makeMove(direction);
-                    }
-                });
-
-                elem.addEventListener('keyup', function(e) {
-                    currentKeyDown = null;
-                });
-            });
-        }
-    }
-
-    class mainComponent extends Component {
-
-        load() {
-            let view = new mainView(this.children);
-            let viewMethods = view.methods;
-            return view.render();
-        }
-    }
-
-    /***/
-
-    class osdView extends View {
-        construct(children : HTMLElement[] = []) {
+    let osdComponent = Component<void, void>(
+        function osdView(){
             let element = document.createElement('div');
             element.classList.add('osd');
 
-            return element;
+            return {
+                element,
+                methods: null
+            };
         }
+    )(null);
+
+
+    let directionsMapping = {
+        [GameModule.Game.directions.left]: '&larr;',
+        [GameModule.Game.directions.right]: '&rarr;',
+        [GameModule.Game.directions.up]: '&uarr;',
+        [GameModule.Game.directions.down]: '&darr;'
     }
 
-    class osdComponent extends Component {
-        load() {
-            let view = new osdView(this.children);
-            let viewMethods = view.methods;
-            return view.render();
-        }
-    }
 
-    /***/
+    let directionComponent = Component<{
+        rightMoveExplodeDirection: (newDir: string) => void,
+        wrongMoveImplodeDirection: (curDir: string) => void
+    }, SimpleServicePackage>(
+        function directionView() {
+            function makeDirectionElement(dir) {
+                var newDirection = document.createElement('div');
+                newDirection.classList.add('direction');
+                newDirection.innerHTML = dir;
+                return newDirection;
+            }
 
-    class directionsView extends View {
-        static directionsMapping = {
-            [GameModule.Game.directions.left]: '&larr;',
-            [GameModule.Game.directions.right]: '&rarr;',
-            [GameModule.Game.directions.up]: '&uarr;',
-            [GameModule.Game.directions.down]: '&darr;'
-        }
+            let element = document.createElement('div');
+            element.id = 'directions';
 
-        construct(children) {
-            let directionsElem = document.createElement('div');
-            directionsElem.id = 'directions';
+            element.appendChild(makeDirectionElement(directionsMapping[game.currentDirection]));
 
-            directionsElem.appendChild(this.makeDirectionElement(directionsView.directionsMapping[game.currentDirection]));
-
-            this.methods = {
+            let methods = {
                 rightMoveExplodeDirection: (newDirection) => {
-                    var toExplode: HTMLElement = <HTMLElement> this.element.children[0];
+                    var toExplode: HTMLElement = <HTMLElement> element.children[0];
                     toExplode.classList.add('exploded');
 
                     function explodeThatStuff(elem) {
@@ -326,12 +289,12 @@ module GameViews {
 
                     setTimeout(explodeThatStuff(toExplode), 250);
 
-                    var newDirectionElem = this.makeDirectionElement(directionsView.directionsMapping[newDirection]);
-                    this.element.appendChild(newDirectionElem);
+                    var newDirectionElem = makeDirectionElement(directionsMapping[newDirection]);
+                    element.appendChild(newDirectionElem);
                 },
                 wrongMoveImplodeDirection:(currentDirection) => {
-                    var toImplode: HTMLElement = <HTMLElement> this.makeDirectionElement(directionsView.directionsMapping[currentDirection]);
-                    this.element.appendChild(toImplode);
+                    var toImplode: HTMLElement = <HTMLElement> makeDirectionElement(directionsMapping[currentDirection]);
+                    element.appendChild(toImplode);
 
                     //Note: this needs to be in a timeout since the transition will only take effect if the element is added first without our transition
                     //class, and THEN given a new class. The timeout just gives a chance for the element to be added to the DOM before we add our transition class.
@@ -350,113 +313,89 @@ module GameViews {
                 }
             }
 
-            return directionsElem;
-        }
-
-        private makeDirectionElement(dir) {
-            var newDirection = document.createElement('div');
-            newDirection.classList.add('direction');
-            newDirection.innerHTML = dir;
-            return newDirection;
-        }
-    }
-
-    class directionsComponent extends Component {
-        load() {
-            let view = new directionsView(this.children);
-            let viewMethods = view.methods;
-
-            game.addEventListener(GameModule.events.NEW_DIRECTION, function(e) {
-                viewMethods.rightMoveExplodeDirection(game.currentDirection);
+            return {
+                element,
+                methods
+            }
+        },
+        function directionController(methods, services) {
+            services.game.addEventListener(GameModule.events.NEW_DIRECTION, function(e) {
+                methods.rightMoveExplodeDirection(services.game.currentDirection);
             });
-            game.addEventListener(GameModule.events.WRONG_MOVE, function(e) {
-                viewMethods.wrongMoveImplodeDirection(game.currentDirection);
+            services.game.addEventListener(GameModule.events.WRONG_MOVE, function(e) {
+                methods.wrongMoveImplodeDirection(services.game.currentDirection);
             });
+        }        
+    )(servicesPackage);    
 
-            return view.render();
-        }
-    }
-
-    /***/
-
-    class scoreView extends View {
-        construct(children : HTMLElement[] = []) {
+    let scoreComponent = Component<{
+            refreshScore: (change) => void
+    }, SimpleServicePackage>(
+        function scoreView() {
             let element = document.createElement('div');
             element.classList.add('score');
 
-            this.methods = {
+            let methods = {
                 refreshScore: (pointsChange) => {
-                    this.element.textContent = game.points.toString();
-                    this.element.classList.remove('animate-good');
-                    this.element.classList.remove('animate-bad');
+                    element.textContent = game.points.toString();
+                    element.classList.remove('animate-good');
+                    element.classList.remove('animate-bad');
 
                     if (pointsChange > 0) {
-                        this.element.classList.add('animate-good');
+                        element.classList.add('animate-good');
                     } else {
-                        this.element.classList.add('animate-bad');
+                        element.classList.add('animate-bad');
                     }
 
                     setTimeout(() => {
-                        this.element.classList.remove('animate-good');
-                        this.element.classList.remove('animate-bad');
+                        element.classList.remove('animate-good');
+                        element.classList.remove('animate-bad');
                     }, 250);
                 }
             };
 
-            return element;
-        }
-    }
-
-    class scoreComponent extends Component {
-        load() {
-            let view = new scoreView(this.children);
-            let viewMethods = view.methods;
-
+            return {
+                element,
+                methods
+            };
+        },
+        function scoreController(methods, services) {
             function refreshScore(e) {
-                viewMethods.refreshScore(e.change);
+                methods.refreshScore(e.change);
             }
 
-            game.addEventListener(GameModule.events.POINTS_DEDUCTED, refreshScore);
-            game.addEventListener(GameModule.events.POINTS_GAINED, refreshScore);
-
-            return view.render();
+            services.game.addEventListener(GameModule.events.POINTS_DEDUCTED, refreshScore);
+            services.game.addEventListener(GameModule.events.POINTS_GAINED, refreshScore);
         }
-    }
+    )(servicesPackage);
 
-    /***/
-
-    class timerView extends View {
-        construct(children) {
+    let timerComponent = Component<{
+            updateTimer: (timeLeft) => void
+    }, SimpleServicePackage>(
+        function timerView() {
             let element = document.createElement('div');
             element.id = 'timer';
 
-            this.methods = {
+            let methods = {
                 updateTimer: (timeLeft) => {
-                    this.element.style.transform = `scaleX(${timeLeft / 100})`;
+                    element.style.transform = `scaleX(${timeLeft / 100})`;
                 }
             }
 
-            return element;
-        }
-    }
-
-    class timerComponent extends Component {
-        load() {
-            let view = new timerView(this.children);
-            let viewMethods = view.methods;
-
-            mainLoop.addEventListener(events.TICK, () => {
-                viewMethods.updateTimer(game.timeLeft);
+            return {
+                element,
+                methods
+            };
+        },
+        function timerComponent(methods, services) {
+            services.mainLoop.addEventListener(events.TICK, () => {
+                methods.updateTimer(services.game.timeLeft);
             });
-
-            return view.render();
         }
-    }
+    )(servicesPackage);
 
-    /***/
-
-    class touchControlsView extends View {
-        construct(children) {
+    let touchControlsComponent = Component<void, void>(
+        function touchControlsView() {
             let element = document.createElement('div');
             element.classList.add('touch-controls');
 
@@ -473,29 +412,21 @@ module GameViews {
                 }
                 );
 
-            return element;
+            return {
+                element,
+                methods: null
+            };
         }
-    }
+    )(null);
 
-    class touchControlsComponent extends Component {
-        load() {
-            let view = new touchControlsView(this.children);
-            let viewMethods = view.methods;
-            return view.render();
-        }
-    }
-
-    function renderComponent(component, ...children):HTMLElement {
-       return (new component(children)).load();
-    }
-
-    let template = renderComponent(mainComponent,
-        renderComponent(osdComponent,
-            renderComponent(directionsComponent),
-            renderComponent(scoreComponent),
-            renderComponent(timerComponent),
-            renderComponent(touchControlsComponent)
+    let mainElement = mainComponent(
+        osdComponent(
+            directionComponent(),
+            scoreComponent(),
+            timerComponent(),
+            touchControlsComponent()
         )
-    );    
-    document.getElementById('main-container').appendChild(template);
+    );
+
+    document.getElementById('main-container').appendChild(mainElement);
 }

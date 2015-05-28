@@ -42,7 +42,7 @@ module GameModule {
         points: number = 0;
         timeLeft: number = 100;
 
-        _listeners = {};
+        private _listeners = {};
 
         static directions = {
             left: 'left',
