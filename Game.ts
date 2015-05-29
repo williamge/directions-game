@@ -1,137 +1,134 @@
+import fn = require('./fn')
+import _Event = require('./Event')
+import ColourModel = require('./ColourModel')
 
-/// <reference path="event.ts" />
+//TODO(wg): one day when TypeScript supports it, these should be inline class expressions
+class _GameColourModelLeft extends ColourModel.plainColourModel {
+    hue(term) {
+        return ColourModel.changeRange(term, [0, 1], [0, 90]);
+    }
+}
 
-module GameModule {
+class _GameColourModelRight extends ColourModel.plainColourModel {
+    hue(term) {
+        return ColourModel.changeRange(term, [0, 1], [90, 180]);
+    }
+}
 
-    
-    //TODO(wg): one day when TypeScript supports it, these should be inline class expressions
-    class _GameColourModelLeft extends ColourModel.plainColourModel {
-        hue(term) {
-            return ColourModel.changeRange(term, [0, 1], [0, 90]);
-        }
+class _GameColourModelUp extends ColourModel.plainColourModel {
+    hue(term) {
+        return ColourModel.changeRange(term, [0, 1], [180, 270]);
+    }
+}
+
+class _GameColourModelDown extends ColourModel.plainColourModel {
+    hue(term) {
+        return ColourModel.changeRange(term, [0, 1], [270, 360]);
+    }
+}
+
+export class Game {
+
+    colourModels: any;
+    currentDirection;
+    points: number = 0;
+    timeLeft: number = 100;
+
+    events = {
+        NEW_DIRECTION: new _Event._Event<{
+                oldDirection: string,
+                newDirection: string
+            }>(),
+        WRONG_MOVE: new _Event._Event<void>(),
+        RIGHT_MOVE: new _Event._Event<void>(),
+        POINTS_DEDUCTED: new _Event._Event<{
+                change: number
+            }>(),
+        POINTS_GAINED: new _Event._Event<{
+                change: number
+            }>()
     }
 
-    class _GameColourModelRight extends ColourModel.plainColourModel {
-        hue(term) {
-            return ColourModel.changeRange(term, [0, 1], [90, 180]);
-        }
+    static directions = {
+        left: 'left',
+        right: 'right',
+        up: 'up',
+        down: 'down'
+    };
+
+    _mySuperCoolColourModels = {
+        left: new _GameColourModelLeft,
+        right: new _GameColourModelRight,
+        up: new _GameColourModelUp,
+        down: new _GameColourModelDown
+    };
+
+    static _DirectionFromIndex(index) {
+        return Game.directions[
+            Object.keys(Game.directions)[
+            index
+            ]
+        ];
     }
 
-    class _GameColourModelUp extends ColourModel.plainColourModel {
-        hue(term) {
-            return ColourModel.changeRange(term, [0, 1], [180, 270]);
-        }
+    static _RandomDirection() {
+        return Game._DirectionFromIndex((Math.floor(Math.random() * 4)))
     }
 
-    class _GameColourModelDown extends ColourModel.plainColourModel {
-        hue(term) {
-            return ColourModel.changeRange(term, [0, 1], [270, 360]);
-        }
+    constructor(options?: any) {
+        options = fn.defaults(options, {
+            colourModel: this._mySuperCoolColourModels
+        });
+
+        this.colourModels = options.colourModel;
+
+        this.currentDirection = this.nextDirection();
     }
 
-    export class Game {
-
-        colourModels: any;
-        currentDirection;
-        points: number = 0;
-        timeLeft: number = 100;
-
-        events = {
-            NEW_DIRECTION: new _Event._Event<{
-                    oldDirection: string,
-                    newDirection: string
-                }>(),
-            WRONG_MOVE: new _Event._Event<void>(),
-            RIGHT_MOVE: new _Event._Event<void>(),
-            POINTS_DEDUCTED: new _Event._Event<{
-                    change: number
-                }>(),
-            POINTS_GAINED: new _Event._Event<{
-                    change: number
-                }>()
-        }
-
-        static directions = {
-            left: 'left',
-            right: 'right',
-            up: 'up',
-            down: 'down'
-        };
-
-        _mySuperCoolColourModels = {
-            left: new _GameColourModelLeft,
-            right: new _GameColourModelRight,
-            up: new _GameColourModelUp,
-            down: new _GameColourModelDown
-        };
-
-        static _DirectionFromIndex(index) {
-            return Game.directions[
-                Object.keys(Game.directions)[
-                index
-                ]
-            ];
-        }
-
-        static _RandomDirection() {
-            return Game._DirectionFromIndex((Math.floor(Math.random() * 4)))
-        }
-
-        constructor(options?: any) {
-            options = f.n(options).defaults({
-                colourModel: this._mySuperCoolColourModels
-            });
-
-            this.colourModels = options.colourModel;
-
-            this.currentDirection = this.nextDirection();
-        }
-
-        update(timeDelta) {
-            this.timeLeft -= 0.05 * timeDelta;
-            if (this.timeLeft <= 0) {
-                this.wrongMove();
-                this.timeLeft = 100;
-            }
-        }
-
-        nextDirection() {
-            return Game._RandomDirection();
-        };
-
-        wrongMove() {
-            this.events.WRONG_MOVE.emit(null);
-            this.points -= 2;
-            this.events.POINTS_DEDUCTED.emit({
-                change: -2
-            });
-        };
-
-        rightMove() {
+    update(timeDelta) {
+        this.timeLeft -= 0.05 * timeDelta;
+        if (this.timeLeft <= 0) {
+            this.wrongMove();
             this.timeLeft = 100;
-            this.events.RIGHT_MOVE.emit(null);
-            this.points += 1;
-            this.events.POINTS_GAINED.emit({
-                change: 1
-            });
         }
-
-        makeMove(direction) {
-
-            if (direction !== this.currentDirection) {
-                this.wrongMove();
-                return false;
-            }
-            this.rightMove();
-
-            this.currentDirection = this.nextDirection();
-            this.events.NEW_DIRECTION.emit({
-                oldDirection: direction,
-                newDirection: this.currentDirection
-            });
-
-            return true;
-        }
-
     }
+
+    nextDirection() {
+        return Game._RandomDirection();
+    };
+
+    wrongMove() {
+        this.events.WRONG_MOVE.emit(null);
+        this.points -= 2;
+        this.events.POINTS_DEDUCTED.emit({
+            change: -2
+        });
+    };
+
+    rightMove() {
+        this.timeLeft = 100;
+        this.events.RIGHT_MOVE.emit(null);
+        this.points += 1;
+        this.events.POINTS_GAINED.emit({
+            change: 1
+        });
+    }
+
+    makeMove(direction) {
+
+        if (direction !== this.currentDirection) {
+            this.wrongMove();
+            return false;
+        }
+        this.rightMove();
+
+        this.currentDirection = this.nextDirection();
+        this.events.NEW_DIRECTION.emit({
+            oldDirection: direction,
+            newDirection: this.currentDirection
+        });
+
+        return true;
+    }
+
 }

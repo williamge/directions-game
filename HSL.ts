@@ -1,40 +1,39 @@
-module HSL {
-    export class HSL{
-        hue: number;
-        saturation: number;
-        lightness: number;
-        constructor(hue, saturation, lightness) {
-            this.hue = hue;
-            this.saturation = saturation;
-            this.lightness = lightness;
-        }
 
-        toCSSString(): string {
-            return `hsl(${this.hue}, ${this.saturation}%, ${this.lightness}%)`;
-        }
+export class HSL{
+    hue: number;
+    saturation: number;
+    lightness: number;
+    constructor(hue, saturation, lightness) {
+        this.hue = hue;
+        this.saturation = saturation;
+        this.lightness = lightness;
+    }
 
-        add(HSLtoAdd: HSL): HSL {
-            this.hue += HSLtoAdd.hue;
-            this.saturation += HSLtoAdd.saturation;
-            this.lightness += HSLtoAdd.lightness;
+    toCSSString(): string {
+        return `hsl(${this.hue}, ${this.saturation}%, ${this.lightness}%)`;
+    }
 
-            return this;
-        }
+    add(HSLtoAdd: HSL): HSL {
+        this.hue += HSLtoAdd.hue;
+        this.saturation += HSLtoAdd.saturation;
+        this.lightness += HSLtoAdd.lightness;
 
-        scalarDivide(scalar: number): HSL {
-            this.hue = this.hue / scalar;
-            this.saturation = this.saturation / scalar;
-            this.lightness = this.lightness / scalar;
+        return this;
+    }
 
-            return this;
-        }
+    scalarDivide(scalar: number): HSL {
+        this.hue = this.hue / scalar;
+        this.saturation = this.saturation / scalar;
+        this.lightness = this.lightness / scalar;
 
-        scalarMultiply(scalar: number): HSL {
-            this.hue = this.hue * scalar;
-            this.saturation = this.saturation * scalar;
-            this.lightness = this.lightness * scalar;
+        return this;
+    }
 
-            return this;
-        }
-    }   
-}
+    scalarMultiply(scalar: number): HSL {
+        this.hue = this.hue * scalar;
+        this.saturation = this.saturation * scalar;
+        this.lightness = this.lightness * scalar;
+
+        return this;
+    }
+}   

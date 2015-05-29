@@ -1,15 +1,14 @@
-/// <reference path="fn.ts" />
-/// <reference path="HSL.ts" />
-/// <reference path="ColourWrapper.ts" />
-/// <reference path="ColourModel.ts" />
-/// <reference path="Game.ts" />
-/// <reference path="View.ts" />
-/// <reference path="GameScreen.ts" />
-
 'use strict';
 
+import HSL = require('./HSL')
+import ColourWrapper = require('./ColourWrapper')
+import ColourModel = require('./ColourModel')
+import GameModule = require('./Game')
+import View = require('./View')
+import GameScreen = require('./GameScreen')
+import _Event = require('./Event')
 
-var brwsr = function(obj) {
+export var brwsr = function(obj) {
     var _brwsr = {
         _target: obj,
         replaceWith: function(newChild) {
@@ -37,7 +36,7 @@ var brwsr = function(obj) {
 };
 
 
-var Surface = {
+export var Surface = {
     createSurface: function(hsl) {
         var surface = document.createElement('div');
         surface.classList.add('surface');
@@ -79,7 +78,7 @@ var Surface = {
     }
 }
 
-module GameMain {
+export module GameMain {
     export enum events {
         TICK
     };

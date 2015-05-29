@@ -1,22 +1,21 @@
-/// <reference path="HSL.ts" />
-/// <reference path="ColourModel.ts" />
+import HSL = require('./HSL')
+import ColourModel = require('./ColourModel')
 
-module ColourWrapper {
-    export function randomTermGenerator(seed: number): number {
 
-        var random = Math.sin(seed) * 1000000;
-        random = random - Math.floor(random);
+export function randomTermGenerator(seed: number): number {
 
-        return random;
-    }
+    var random = Math.sin(seed) * 1000000;
+    random = random - Math.floor(random);
 
-    export function hslFromSeed(seed: number, colourModel: ColourModel.ColourModel) {
-        colourModel = colourModel || new ColourModel.ColourModel();
-        var randomTerm = randomTermGenerator(seed);
-        return new HSL.HSL(
-            colourModel.hue(randomTerm),
-            colourModel.saturation(randomTermGenerator(randomTerm)),
-            colourModel.lightness(randomTermGenerator(randomTermGenerator(randomTerm)))
-            )
-    }
+    return random;
+}
+
+export function hslFromSeed(seed: number, colourModel: ColourModel.ColourModel) {
+    colourModel = colourModel || new ColourModel.ColourModel();
+    var randomTerm = randomTermGenerator(seed);
+    return new HSL.HSL(
+        colourModel.hue(randomTerm),
+        colourModel.saturation(randomTermGenerator(randomTerm)),
+        colourModel.lightness(randomTermGenerator(randomTermGenerator(randomTerm)))
+        )
 }
