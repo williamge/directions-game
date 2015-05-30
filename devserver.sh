@@ -1,1 +1,1 @@
-./build.sh && python -m SimpleHTTPServer
+npm run postinstall && python -m SimpleHTTPServer

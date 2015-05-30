@@ -1,5 +1,5 @@
 
-export class _Event<T>{
+class _Event<T>{
     private listeners: ((T) => void)[] = [];
     
     constructor(childEvents?: any[]) {
@@ -27,3 +27,5 @@ export class _Event<T>{
         )
     }
 }
+
+export = _Event;

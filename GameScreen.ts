@@ -1,15 +1,15 @@
 import View = require('./View')
-import main = require('./main')
+import MainLoop = require('./MainLoop')
 import GameModule = require('./Game')
 import fn = require('./fn')
 import ColourWrapper = require('./ColourWrapper')
-let brwsr = main.brwsr
-let Component = View.Component
-let Surface = main.Surface
+import Surface = require('./Surface');
+let Component = View.Component;
+
 
 interface SimpleServicePackage {
     game: GameModule.Game;
-    mainLoop: main.GameMain.MainLoop
+    mainLoop: MainLoop
 }
 
 export function create(servicesPackage: SimpleServicePackage) {
@@ -35,7 +35,7 @@ export function create(servicesPackage: SimpleServicePackage) {
                             }
                         });
                 }
-            }
+            };
 
             return {
                 element,
@@ -129,7 +129,7 @@ export function create(servicesPackage: SimpleServicePackage) {
 
                      function explodeThatStuff(elem) {
                          return function() {
-                             brwsr(elem).remove();
+                             elem.parentNode.removeChild(elem);
                          }
                      }
 
@@ -151,7 +151,7 @@ export function create(servicesPackage: SimpleServicePackage) {
 
                      function implodeThatStuff(elem) {
                          return function() {
-                             brwsr(elem).remove();
+                             elem.parentNode.removeChild(elem);
                          }
                      }
 

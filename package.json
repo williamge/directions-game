@@ -14,8 +14,9 @@
   },
   "scripts": {
     "build:ts": "tsc --sourceMap --module commonjs main.ts",
-    "build:bundle": "browserify --debug --entry main.js --outfile _main.js",
-    "postinstall": "npm run build:ts && npm run build:bundle && mv _main.js main.js"
+    "build:bundle": "browserify --outfile _main.js main.js",
+    "postinstall": "npm run build:ts && npm run build:bundle && mv _main.js main.js",
+    "clean": "rm *.js *.js.map"
   },
   "author": "William Gelhar",
   "license": "ISC",

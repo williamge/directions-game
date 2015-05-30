@@ -35,19 +35,19 @@ export class Game {
     timeLeft: number = 100;
 
     events = {
-        NEW_DIRECTION: new _Event._Event<{
+        NEW_DIRECTION: new _Event<{
                 oldDirection: string,
                 newDirection: string
             }>(),
-        WRONG_MOVE: new _Event._Event<void>(),
-        RIGHT_MOVE: new _Event._Event<void>(),
-        POINTS_DEDUCTED: new _Event._Event<{
+        WRONG_MOVE: new _Event<void>(),
+        RIGHT_MOVE: new _Event<void>(),
+        POINTS_DEDUCTED: new _Event<{
                 change: number
             }>(),
-        POINTS_GAINED: new _Event._Event<{
+        POINTS_GAINED: new _Event<{
                 change: number
             }>()
-    }
+    };
 
     static directions = {
         left: 'left',
@@ -95,7 +95,7 @@ export class Game {
 
     nextDirection() {
         return Game._RandomDirection();
-    };
+    }
 
     wrongMove() {
         this.events.WRONG_MOVE.emit(null);
@@ -103,7 +103,7 @@ export class Game {
         this.events.POINTS_DEDUCTED.emit({
             change: -2
         });
-    };
+    }
 
     rightMove() {
         this.timeLeft = 100;

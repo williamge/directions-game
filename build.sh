@@ -1,1 +1,1 @@
-tsc --sourceMap --out main.js main.ts
+npm run build.sh
