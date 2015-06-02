@@ -1,6 +1,7 @@
 import GameModule = require('./Game');
 import MainLoop = require('./MainLoop');
 import GameScreen = require('./GameScreen');
+import MainScreen = require('./MainScreen');
 
 document.addEventListener('DOMContentLoaded', function(){
     /***/
@@ -30,6 +31,8 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     };
 
-    document.getElementById('main-container').appendChild(mainElement);
+    mainContainer.appendChild(MainScreen.create({
+        gameStartButtonPress
+    }));
 
 });
