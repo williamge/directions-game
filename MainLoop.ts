@@ -19,11 +19,6 @@ class MainLoop {
     };
 
     constructor(game: GameModule.Game) {
-        this.lastTime = (new Date()).getTime();
-        this.mainInterval = setInterval(
-            this.loop.bind(this),
-            10
-            );
         this.game = game;
     }
 
@@ -34,6 +29,18 @@ class MainLoop {
 
         this.game.update(delta);
         this.events.TICK.emit(null);
+    }
+
+    pause() {
+        clearInterval(this.mainInterval);
+    }
+
+    start() {
+        this.lastTime = (new Date()).getTime();
+        this.mainInterval = setInterval(
+            this.loop.bind(this),
+            10
+        );
     }
 }
 

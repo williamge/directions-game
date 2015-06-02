@@ -46,7 +46,8 @@ export class Game {
             }>(),
         POINTS_GAINED: new _Event<{
                 change: number
-            }>()
+            }>(),
+        LOST_GAME: new _Event<void>()
     };
 
     static directions = {
@@ -103,6 +104,10 @@ export class Game {
         this.events.POINTS_DEDUCTED.emit({
             change: -2
         });
+
+        if (this.points <= -10) {
+            this.events.LOST_GAME.emit(null);
+        }
     }
 
     rightMove() {
