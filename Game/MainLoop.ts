@@ -1,12 +1,7 @@
 'use strict';
 
-import HSL = require('./HSL')
-import ColourWrapper = require('./ColourWrapper')
-import ColourModel = require('./ColourModel')
 import GameModule = require('./Game')
-import View = require('./View')
-import GameScreen = require('./GameScreen')
-import _Event = require('./Event')
+import _Event = require('../lib/Event')
 
 class MainLoop {
     private lastTime;

@@ -1,6 +1,6 @@
-import fn = require('./fn')
-import _Event = require('./Event')
-import ColourModel = require('./ColourModel')
+import fn = require('../lib/fn')
+import _Event = require('../lib/Event')
+import ColourModel = require('../lib/ColourModel')
 
 //TODO(wg): one day when TypeScript supports it, these should be inline class expressions
 class _GameColourModelLeft extends ColourModel.plainColourModel {

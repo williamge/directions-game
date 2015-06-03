@@ -1,9 +1,8 @@
-import View = require('./View')
-import MainLoop = require('./MainLoop')
-import GameModule = require('./Game')
-import fn = require('./fn')
-import ColourWrapper = require('./ColourWrapper')
-import Surface = require('./Surface');
+import View = require('../lib/View')
+import MainLoop = require('../Game/MainLoop')
+import GameModule = require('../Game/Game')
+import ColourWrapper = require('../lib/ColourWrapper')
+import Surface = require('../Surface');
 let Component = View.Component;
 
 

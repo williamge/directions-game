@@ -1,5 +1,5 @@
 
-import HSL = require('./HSL');
+import HSL = require('./lib/HSL');
 
 export function createSurface(hsl) {
     var surface = document.createElement('div');

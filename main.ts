@@ -1,7 +1,7 @@
-import GameModule = require('./Game');
-import MainLoop = require('./MainLoop');
-import GameScreen = require('./GameScreen');
-import MainScreen = require('./MainScreen');
+import GameModule = require('./Game/Game');
+import MainLoop = require('./Game/MainLoop');
+import GameScreen = require('./Screens/GameScreen');
+import MainScreen = require('./Screens/MainScreen');
 
 document.addEventListener('DOMContentLoaded', function(){
     /***/
