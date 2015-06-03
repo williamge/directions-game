@@ -9,6 +9,8 @@ class MainLoop {
 
     private game;
 
+    isPaused: boolean = true;
+
     events = {
         TICK: new _Event<void>()
     };
@@ -28,6 +30,7 @@ class MainLoop {
 
     pause() {
         clearInterval(this.mainInterval);
+        this.isPaused = true;
     }
 
     start() {
@@ -36,6 +39,7 @@ class MainLoop {
             this.loop.bind(this),
             10
         );
+        this.isPaused = false;
     }
 }
 

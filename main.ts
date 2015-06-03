@@ -2,37 +2,60 @@ import GameModule = require('./Game/Game');
 import MainLoop = require('./Game/MainLoop');
 import GameScreen = require('./Screens/GameScreen');
 import MainScreen = require('./Screens/MainScreen');
+import GameOverOverlay = require('./Screens/GameOverOverlay');
 
 document.addEventListener('DOMContentLoaded', function(){
     /***/
 
     let mainContainer = document.getElementById('main-container');
 
-    let gameStartButtonPress = function() {
-        mainContainer.removeChild(mainContainer.children[0]);
+    function clearMainContainer() {
+        while(mainContainer.children.length) {
+            mainContainer.removeChild(mainContainer.children[0]);
+        }
+    }
 
-        let game = new GameModule.Game();
-        let mainLoop = new MainLoop(game);
+    let manageScreens = {
+        gameStart: function() {
+            clearMainContainer();
 
-        let servicesPackage = {
-            game,
-            mainLoop
-        };
+            let game = new GameModule.Game();
+            let mainLoop = new MainLoop(game);
 
-        let mainElement = GameScreen.create(servicesPackage);
-        mainContainer.appendChild(mainElement);
+            let servicesPackage = {
+                game,
+                mainLoop
+            };
 
-        mainLoop.start();
+            let mainElement = GameScreen.create(servicesPackage);
+            mainContainer.appendChild(mainElement);
 
-        game.events.LOST_GAME.listen(function() {
-            mainLoop.pause();
-            alert("Oops you lost");
-            //TODO(wg): show game over screen
-        });
+            mainLoop.start();
+
+            game.events.LOST_GAME.listen(function() {
+                mainLoop.pause();
+                manageScreens.gameOver();
+            });
+        },
+        gameOver: function() {
+            let gameOverOverlay = GameOverOverlay.create({
+                restartGame: function() {
+                    manageScreens.gameStart();
+                },
+                mainMenu: function() {
+                    manageScreens.mainMenu();
+                }
+            });
+            mainContainer.appendChild(gameOverOverlay);
+        },
+        mainMenu: function() {
+            clearMainContainer();
+            mainContainer.appendChild(MainScreen.create({
+                gameStartButtonPress: manageScreens.gameStart
+            }));
+        }
     };
 
-    mainContainer.appendChild(MainScreen.create({
-        gameStartButtonPress
-    }));
+    manageScreens.mainMenu();
 
 });

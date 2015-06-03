@@ -1,19 +1,22 @@
 import View = require('../lib/View')
-import MainLoop = require('../Game/MainLoop')
-import GameModule = require('../Game/Game')
-import ColourWrapper = require('../lib/ColourWrapper')
-import Surface = require('../Surface');
 import Button = require('./components/Button');
 let Component = View.Component;
 
 
 export function create(handlers: {
-    gameStartButtonPress: () => void
+    restartGame: () => void;
+    showScores ?: () => void;
+    mainMenu : () => void;
 }) {
     let mainComponent = Component<void, void>(
         function mainView(initialBindings) {
             let element = document.createElement('div');
-            element.id = 'main-menu';
+            element.classList.add('overlay');
+
+            let youLostText = document.createElement('h1');
+            youLostText.textContent = 'Game Over';
+
+            element.appendChild(youLostText);
 
             return {
                 element,
@@ -30,16 +33,22 @@ export function create(handlers: {
 
     let mainElement = mainComponent(
         Button({
-                label: 'Start'
-            },
-            {
-                click: handlers.gameStartButtonPress
-            })(),
+            label: 'Restart'
+        }, {
+            click: handlers.restartGame
+        })(),
         Button({
-            label: 'High scores'
+            label: 'Scores'
+        }, {
+            click: handlers.showScores
+        })(),
+        Button({
+            label: 'Main menu'
+        }, {
+            click: handlers.mainMenu
         })()
     );
 
-    return mainElement
+    return mainElement;
 }
 

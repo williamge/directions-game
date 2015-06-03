@@ -65,7 +65,7 @@ export function create(servicesPackage: SimpleServicePackage) {
                             direction = GameModule.Game.directions.down;
                             break;
                     }
-                    if (direction && currentKeyDown === null) {
+                    if (direction && currentKeyDown === null && !services.mainLoop.isPaused) {
                         currentKeyDown = direction;
 
                         services.game.makeMove(direction);
@@ -102,7 +102,7 @@ export function create(servicesPackage: SimpleServicePackage) {
          [GameModule.Game.directions.right]: '&rarr;',
          [GameModule.Game.directions.up]: '&uarr;',
          [GameModule.Game.directions.down]: '&darr;'
-     }
+     };
 
 
      let directionComponent = Component<{
