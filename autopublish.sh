@@ -1,5 +1,5 @@
 git stash
-git checkout gh-pages
+git checkout -f gh-pages
 git pull --rebase origin gh-pages
 git merge master
 npm run postinstall
