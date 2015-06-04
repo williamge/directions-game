@@ -34,11 +34,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
             game.events.LOST_GAME.listen(function() {
                 mainLoop.pause();
-                manageScreens.gameOver();
+                mainContainer.appendChild(manageScreens.gameOverOverlay());
             });
         },
-        gameOver: function() {
-            let gameOverOverlay = GameOverOverlay.create({
+        gameOverOverlay: function() {
+            return GameOverOverlay.create({
                 restartGame: function() {
                     manageScreens.gameStart();
                 },
@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function(){
                     manageScreens.mainMenu();
                 }
             });
-            mainContainer.appendChild(gameOverOverlay);
         },
         mainMenu: function() {
             clearMainContainer();

@@ -34,6 +34,8 @@ export class Game {
     points: number = 0;
     timeLeft: number = 100;
 
+    lives = 5;
+
     events = {
         NEW_DIRECTION: new _Event<{
                 oldDirection: string,
@@ -105,7 +107,7 @@ export class Game {
             change: -2
         });
 
-        if (this.points <= -10) {
+        if (--this.lives <= 0) {
             this.events.LOST_GAME.emit(null);
         }
     }

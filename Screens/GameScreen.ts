@@ -6,6 +6,8 @@ import ColourWrapper = require('../lib/ColourWrapper')
 import Surface = require('../Surface');
 let Component = View.Component;
 
+import Container = require('./components/Container');
+
 
 interface SimpleServicePackage {
     game: GameModule.Game;
@@ -157,7 +159,7 @@ export function create(servicesPackage: SimpleServicePackage) {
 
                      setTimeout(implodeThatStuff(toImplode), 250);
                  }
-             }
+             };
 
              return {
                  element,
@@ -182,9 +184,11 @@ export function create(servicesPackage: SimpleServicePackage) {
      let scoreComponent = Component<{
              refreshScore: (change: number, points: number) => void
      }, SimpleServicePackage>(
-         function scoreView() {
-             let element = document.createElement('div');
+         function scoreView(bindings) {
+             let element = document.createElement('span');
              element.classList.add('score');
+
+             element.textContent = bindings.initialScore.toString();
 
              let methods = {
                  refreshScore: (pointsChange: number, points: number) => {
@@ -217,8 +221,58 @@ export function create(servicesPackage: SimpleServicePackage) {
 
              services.game.events.POINTS_DEDUCTED.listen(refreshScore);
              services.game.events.POINTS_GAINED.listen(refreshScore);
+         },
+         function scoreBindings(services){
+            return {
+                initialScore: services.game.points
+            };
          }
      )(servicesPackage);
+
+    let livesComponent = Component<{
+        updateLife: (lives: number) => void
+    }, SimpleServicePackage>(
+        function livesView(bindings) {
+            let element = document.createElement('span');
+            element.classList.add('lives');
+
+            function createLivesText(_lives) {
+                let outputText = '';
+                while (_lives-- > 0) {
+                    outputText = outputText + '+';
+                }
+                return outputText;
+            }
+
+            let livesText = document.createElement('span');
+            element.appendChild(livesText);
+
+            livesText.textContent = createLivesText(bindings.initialLives);
+
+            let methods = {
+                updateLife: (lives: number) => {
+                    livesText.textContent = createLivesText(lives);
+                }
+            };
+
+            return {
+                element,
+                methods
+            };
+        },
+        function livesController(methods, services) {
+            function refreshLives(e) {
+                methods.updateLife(services.game.lives);
+            }
+
+            services.game.events.WRONG_MOVE.listen(refreshLives);
+        },
+        function livesBindings(services){
+            return {
+                initialLives: services.game.lives
+            };
+        }
+    )(servicesPackage);
 
      let timerComponent = Component<{
              updateTimer: (timeLeft) => void
@@ -231,7 +285,7 @@ export function create(servicesPackage: SimpleServicePackage) {
                  updateTimer: (timeLeft) => {
                      element.style.transform = `scaleX(${timeLeft / 100})`;
                  }
-             }
+             };
 
              return {
                  element,
@@ -280,15 +334,18 @@ export function create(servicesPackage: SimpleServicePackage) {
          }    
      )(servicesPackage);
 
-     let mainElement = mainComponent(
+     return mainComponent(
          osdComponent(
              directionComponent(),
-             scoreComponent(),
+             Container( {
+                     'class' : 'score-bar'
+                 },
+                 scoreComponent(),
+                 livesComponent()
+             ),
              timerComponent(),
              touchControlsComponent()
          )
      );
-
-     return mainElement
 }
 
