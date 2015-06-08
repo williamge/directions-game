@@ -24,6 +24,7 @@ let _backgroundColourModel = new backgroundColourModel();
 export function create(handlers: {
     gameStartButtonPress: () => void;
     tutorialButtonPress ?: () => void;
+    scoresButtonPress: () => void;
 }) {
     let mainComponent = Component<void, void>(
         function mainView(initialBindings) {
@@ -81,9 +82,9 @@ export function create(handlers: {
         }
     )(null);
 
-    let mainElement = mainComponent(
+    return mainComponent(
         Container({
-            class: 'buttons-container'
+            'class': 'buttons-container'
         },
             Button({
                     label: 'Start'
@@ -96,13 +97,13 @@ export function create(handlers: {
                 },
                 {
                     click: handlers.tutorialButtonPress
-                })(): null,
+                })() : null,
             Button({
                 label: 'High scores'
+            }, {
+                click: handlers.scoresButtonPress
             })()
         )
     );
-
-    return mainElement
 }
 

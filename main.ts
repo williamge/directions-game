@@ -2,6 +2,7 @@ import GameModule = require('./Game/Game');
 import MainLoop = require('./Game/MainLoop');
 import GameScreen = require('./Screens/GameScreen');
 import MainScreen = require('./Screens/MainScreen');
+import ScoresScreen = require('./Screens/ScoresScreen');
 import GameOverOverlay = require('./Screens/GameOverOverlay');
 import TutorialOverlay = require('./Screens/TutorialOverlay');
 import DataStore = require('./Game/DataStore');
@@ -62,8 +63,19 @@ document.addEventListener('DOMContentLoaded', function(){
                 },
                 mainMenu: function() {
                     manageScreens.mainMenu();
+                },
+                showScores: () => {
+                    manageScreens.showScores();
                 }
             });
+        },
+        showScores: function() {
+            clearMainContainer();
+            mainContainer.appendChild(ScoresScreen.create({
+                mainMenuPress: () => {
+                    manageScreens.mainMenu();
+                }
+            }));
         },
         mainMenu: function() {
             clearMainContainer();
@@ -74,7 +86,10 @@ document.addEventListener('DOMContentLoaded', function(){
                 },
                 tutorialButtonPress: !firstRun ? () => {
                     manageScreens.gameStart(true);
-                } : null
+                } : null,
+                scoresButtonPress: () => {
+                    manageScreens.showScores();
+                }
             }));
         }
     };

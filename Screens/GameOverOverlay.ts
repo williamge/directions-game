@@ -5,7 +5,7 @@ let Component = View.Component;
 
 export function create(handlers: {
     restartGame: () => void;
-    showScores ?: () => void;
+    showScores : () => void;
     mainMenu : () => void;
 }) {
     let mainComponent = Component<void, void>(

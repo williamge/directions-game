@@ -9,6 +9,13 @@
                 padding: 0;
             }
 
+            html {
+                box-sizing: border-box;
+            }
+            *, *:before, *:after {
+                box-sizing: inherit;
+            }
+
             #main-container, .main-container {
                 font-family: arial sans-serif;
             }
@@ -65,13 +72,29 @@
             }
 
             #main-menu button,
-            .overlay button {
+            .overlay button,
+            #scores button{
                 background-color: pink;
                 font-size: 1.5em;
                 display: block;
                 margin-left: auto;
                 margin-right: auto;
                 padding: .75em;
+            }
+
+            #scores {
+                font-family: arial sans-serif;
+                font-size: 2em;
+                margin-left: 2em;
+                margin-right: 2em;
+            }
+
+            #scores ol {
+
+            }
+
+            .tutorial {
+                text-align: center
             }
 
             .tutorial table {
@@ -85,6 +108,11 @@
                 text-align: center;
             }
 
+            .tutorial table {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
             .tutorial table .outlined {
                 border: 2px solid hsl(0, 0%, 80%);
                 color: hsl(0, 0%, 95%);
@@ -94,6 +122,12 @@
                 border: 2px solid hsl(0, 0%, 80%);
                 color: hsl(0, 0%, 5%);
                 background-color: hsl(0, 0%, 40%);
+            }
+
+            .tutorial .just-the-word-or {
+                font-size: 2em;
+                background-color: hsla(0, 0%, 25%, 0.6);
+                font-weight: bold;
             }
 
             .osd {

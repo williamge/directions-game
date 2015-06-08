@@ -29,6 +29,7 @@ let DataStore = {
 
         _topScores.push(score);
         _topScores.sort();
+        _topScores = _topScores.reverse();
 
         localStorage.setItem('topScores', JSON.stringify(_topScores.map((scoreAsNumber) => String(scoreAsNumber))));
     }
