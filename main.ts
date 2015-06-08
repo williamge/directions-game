@@ -3,9 +3,10 @@ import MainLoop = require('./Game/MainLoop');
 import GameScreen = require('./Screens/GameScreen');
 import MainScreen = require('./Screens/MainScreen');
 import GameOverOverlay = require('./Screens/GameOverOverlay');
+import TutorialOverlay = require('./Screens/TutorialOverlay');
+import DataStore = require('./Game/DataStore');
 
 document.addEventListener('DOMContentLoaded', function(){
-    /***/
 
     let mainContainer = document.getElementById('main-container');
 
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     let manageScreens = {
-        gameStart: function() {
+        gameStart: function(showTutorial : boolean) {
             clearMainContainer();
 
             let game = new GameModule.Game();
@@ -30,17 +31,34 @@ document.addEventListener('DOMContentLoaded', function(){
             let mainElement = GameScreen.create(servicesPackage);
             mainContainer.appendChild(mainElement);
 
-            mainLoop.start();
+            if (showTutorial) {
+                let tutorialOverlay = manageScreens.tutorialOverlay({
+                    closeTutorial: () => {
+                        mainLoop.start();
+                        mainContainer.removeChild(tutorialOverlay);
+                    }
+                });
+
+                mainContainer.appendChild(tutorialOverlay);
+            } else {
+                mainLoop.start();
+            }
 
             game.events.LOST_GAME.listen(function() {
                 mainLoop.pause();
                 mainContainer.appendChild(manageScreens.gameOverOverlay());
+
+                DataStore.incrementPlayedCount();
+                DataStore.setTopScore(game.points);
             });
         },
+        /* Note: Basically done purely for convention, there's nothing to do yet that would
+         * require an additional function to call this rather than just calling it directly. */
+        tutorialOverlay: TutorialOverlay.create.bind(TutorialOverlay),
         gameOverOverlay: function() {
             return GameOverOverlay.create({
                 restartGame: function() {
-                    manageScreens.gameStart();
+                    manageScreens.gameStart(false);
                 },
                 mainMenu: function() {
                     manageScreens.mainMenu();
@@ -49,8 +67,14 @@ document.addEventListener('DOMContentLoaded', function(){
         },
         mainMenu: function() {
             clearMainContainer();
+            let firstRun = DataStore.getPlayedCount() <= 0;
             mainContainer.appendChild(MainScreen.create({
-                gameStartButtonPress: manageScreens.gameStart
+                gameStartButtonPress: () => {
+                    manageScreens.gameStart(firstRun);
+                },
+                tutorialButtonPress: !firstRun ? () => {
+                    manageScreens.gameStart(true);
+                } : null
             }));
         }
     };

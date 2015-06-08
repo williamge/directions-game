@@ -11,7 +11,9 @@ export = function CreateContainerElement(attrs: {
         element.classList.add(attrs.class);
     }
 
-    children.forEach((child) => {
+    children.filter((child) => {
+        return child != null;
+    }).forEach((child) => {
         element.appendChild(child);
     });
 
