@@ -1,4 +1,40 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var DataStore = {
+    incrementPlayedCount: function () {
+        var _count = localStorage.getItem('numberOfTimesPlayed');
+        if (!_count) {
+            localStorage.setItem('numberOfTimesPlayed', String(1));
+        }
+        else {
+            localStorage.setItem('numberOfTimesPlayed', _count + 1);
+        }
+    },
+    getPlayedCount: function () {
+        var _count = localStorage.getItem('numberOfTimesPlayed');
+        return _count || 0;
+    },
+    getTopScores: function (numberToGet) {
+        var _topScores = localStorage.getItem('topScores');
+        if (!_topScores) {
+            return [];
+        }
+        else {
+            var _topScoresParsed = JSON.parse(_topScores);
+            return _topScoresParsed.slice(0, numberToGet || _topScoresParsed.length)
+                .map(function (scoreAsString) { return Number(scoreAsString); });
+        }
+    },
+    setTopScore: function (score) {
+        var _topScores = DataStore.getTopScores();
+        _topScores.push(score);
+        _topScores.sort();
+        _topScores = _topScores.reverse();
+        localStorage.setItem('topScores', JSON.stringify(_topScores.map(function (scoreAsNumber) { return String(scoreAsNumber); })));
+    }
+};
+module.exports = DataStore;
+
+},{}],2:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -53,6 +89,7 @@ var Game = (function () {
     function Game(options) {
         this.points = 0;
         this.timeLeft = 100;
+        this.lives = 5;
         this.events = {
             NEW_DIRECTION: new _Event(),
             WRONG_MOVE: new _Event(),
@@ -95,7 +132,7 @@ var Game = (function () {
         this.events.POINTS_DEDUCTED.emit({
             change: -2
         });
-        if (this.points <= -10) {
+        if (--this.lives <= 0) {
             this.events.LOST_GAME.emit(null);
         }
     };
@@ -130,7 +167,7 @@ var Game = (function () {
 })();
 exports.Game = Game;
 
-},{"../lib/ColourModel":8,"../lib/Event":10,"../lib/fn":13}],2:[function(require,module,exports){
+},{"../lib/ColourModel":12,"../lib/Event":14,"../lib/fn":17}],3:[function(require,module,exports){
 'use strict';
 var _Event = require('../lib/Event');
 var MainLoop = (function () {
@@ -161,7 +198,7 @@ var MainLoop = (function () {
 })();
 module.exports = MainLoop;
 
-},{"../lib/Event":10}],3:[function(require,module,exports){
+},{"../lib/Event":14}],4:[function(require,module,exports){
 var View = require('../lib/View');
 var Button = require('./components/Button');
 var Component = View.Component;
@@ -196,12 +233,13 @@ function create(handlers) {
 }
 exports.create = create;
 
-},{"../lib/View":12,"./components/Button":6}],4:[function(require,module,exports){
+},{"../lib/View":16,"./components/Button":9}],5:[function(require,module,exports){
 var View = require('../lib/View');
 var GameModule = require('../Game/Game');
 var ColourWrapper = require('../lib/ColourWrapper');
 var Surface = require('../Surface');
 var Component = View.Component;
+var Container = require('./components/Container');
 function create(servicesPackage) {
     var mainComponent = Component(function mainView(initialBindings) {
         var element = document.createElement('div');
@@ -328,9 +366,10 @@ function create(servicesPackage) {
             direction: services.game.currentDirection
         };
     })(servicesPackage);
-    var scoreComponent = Component(function scoreView() {
-        var element = document.createElement('div');
+    var scoreComponent = Component(function scoreView(bindings) {
+        var element = document.createElement('span');
         element.classList.add('score');
+        element.textContent = bindings.initialScore.toString();
         var methods = {
             refreshScore: function (pointsChange, points) {
                 element.textContent = points.toString();
@@ -358,6 +397,42 @@ function create(servicesPackage) {
         }
         services.game.events.POINTS_DEDUCTED.listen(refreshScore);
         services.game.events.POINTS_GAINED.listen(refreshScore);
+    }, function scoreBindings(services) {
+        return {
+            initialScore: services.game.points
+        };
+    })(servicesPackage);
+    var livesComponent = Component(function livesView(bindings) {
+        var element = document.createElement('span');
+        element.classList.add('lives');
+        function createLivesText(_lives) {
+            var outputText = '';
+            while (_lives-- > 0) {
+                outputText = outputText + '+';
+            }
+            return outputText;
+        }
+        var livesText = document.createElement('span');
+        element.appendChild(livesText);
+        livesText.textContent = createLivesText(bindings.initialLives);
+        var methods = {
+            updateLife: function (lives) {
+                livesText.textContent = createLivesText(lives);
+            }
+        };
+        return {
+            element: element,
+            methods: methods
+        };
+    }, function livesController(methods, services) {
+        function refreshLives(e) {
+            methods.updateLife(services.game.lives);
+        }
+        services.game.events.WRONG_MOVE.listen(refreshLives);
+    }, function livesBindings(services) {
+        return {
+            initialLives: services.game.lives
+        };
     })(servicesPackage);
     var timerComponent = Component(function timerView() {
         var element = document.createElement('div');
@@ -400,20 +475,71 @@ function create(servicesPackage) {
             }
         };
     })(servicesPackage);
-    var mainElement = mainComponent(osdComponent(directionComponent(), scoreComponent(), timerComponent(), touchControlsComponent()));
-    return mainElement;
+    return mainComponent(osdComponent(directionComponent(), Container({
+        'class': 'score-bar'
+    }, scoreComponent(), livesComponent()), timerComponent(), touchControlsComponent()));
     var _a;
 }
 exports.create = create;
 
-},{"../Game/Game":1,"../Surface":7,"../lib/ColourWrapper":9,"../lib/View":12}],5:[function(require,module,exports){
+},{"../Game/Game":2,"../Surface":11,"../lib/ColourWrapper":13,"../lib/View":16,"./components/Container":10}],6:[function(require,module,exports){
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
 var View = require('../lib/View');
+var ColourWrapper = require('../lib/ColourWrapper');
+var ColourModel = require('../lib/ColourModel');
 var Button = require('./components/Button');
+var Container = require('./components/Container');
 var Component = View.Component;
+var backgroundColourModel = (function (_super) {
+    __extends(backgroundColourModel, _super);
+    function backgroundColourModel() {
+        _super.apply(this, arguments);
+    }
+    backgroundColourModel.prototype.hue = function (term) {
+        return ColourModel.changeRange(term, [0, 1], [0, 360]);
+    };
+    backgroundColourModel.prototype.saturation = function (term) {
+        return ColourModel.changeRange(term, [0, 1], [45, 55]);
+    };
+    return backgroundColourModel;
+})(ColourModel.plainColourModel);
+var _backgroundColourModel = new backgroundColourModel();
 function create(handlers) {
     var mainComponent = Component(function mainView(initialBindings) {
         var element = document.createElement('div');
         element.id = 'main-menu';
+        var background = document.createElement('div');
+        background.id = 'background-container';
+        element.appendChild(background);
+        function addArrowToScreen(next) {
+            var firstArrow = document.createElement('div');
+            firstArrow.classList.add('arrow');
+            firstArrow.classList.add('active');
+            firstArrow.innerHTML = ['&larr;', '&rarr;', '&uarr;', '&darr;'][Math.floor(Math.random() * 4)];
+            background.appendChild(firstArrow);
+            var computedTransform = background.clientWidth - firstArrow.offsetLeft - firstArrow.offsetWidth;
+            firstArrow.style.transform = "translateX(" + computedTransform + "px)";
+            firstArrow.style.backgroundColor = ColourWrapper.hslFromSeed(Math.random(), _backgroundColourModel).toCSSString();
+            //HACK(wg): Done to force reflow of the DOM layout and start the transition, otherwise the transition is skipped.
+            var __notUsed = firstArrow.offsetHeight;
+            //Now that the element is in position, we can start the transition.
+            //Since we're setting the position of the element dynamically, this is a safety feature to prevent a CSS transition from being applied during our initial positioning -- we only want the transition to run to move the element from right to left, not for setting it up.
+            firstArrow.classList.add('ready-for-transition');
+            firstArrow.style.transform = '';
+            setTimeout(function transitionEnd() {
+                next();
+            }, 750);
+        }
+        (function addArrowsToScreenQuiteContinuously() {
+            addArrowToScreen(function next() {
+                setTimeout(addArrowsToScreenQuiteContinuously, 1);
+            });
+        })();
         return {
             element: element,
             methods: null
@@ -421,21 +547,115 @@ function create(handlers) {
     }, function mainController(methods, services) {
     }, function initialBindings(services) {
     })(null);
-    var mainElement = mainComponent(Button({
+    return mainComponent(Container({
+        'class': 'buttons-container'
+    }, Button({
         label: 'Start'
     }, {
         click: handlers.gameStartButtonPress
-    })(), Button({
+    })(), handlers.tutorialButtonPress ? Button({
+        label: 'Tutorial'
+    }, {
+        click: handlers.tutorialButtonPress
+    })() : null, Button({
         label: 'High scores'
-    })());
-    return mainElement;
+    }, {
+        click: handlers.scoresButtonPress
+    })()));
 }
 exports.create = create;
 
-},{"../lib/View":12,"./components/Button":6}],6:[function(require,module,exports){
+},{"../lib/ColourModel":12,"../lib/ColourWrapper":13,"../lib/View":16,"./components/Button":9,"./components/Container":10}],7:[function(require,module,exports){
+var View = require('../lib/View');
+var Button = require('./components/Button');
+var Container = require('./components/Container');
+var Component = View.Component;
+var DataStore = require('../Game/DataStore');
+function create(handlers) {
+    var mainComponent = Component(function mainView(initialBindings) {
+        var element = document.createElement('div');
+        element.id = 'scores';
+        var scoresList = document.createElement('ol');
+        DataStore.getTopScores(15).forEach(function (score) {
+            var scoreElem = document.createElement('li');
+            scoreElem.textContent = score.toString();
+            scoresList.appendChild(scoreElem);
+        });
+        element.appendChild(scoresList);
+        return {
+            element: element,
+            methods: null
+        };
+    }, function mainController(methods, services) {
+    }, function initialBindings(services) {
+    })(null);
+    return Container({}, Button({
+        label: 'Back to main menu'
+    }, {
+        click: handlers.mainMenuPress
+    })(), mainComponent());
+}
+exports.create = create;
+
+},{"../Game/DataStore":1,"../lib/View":16,"./components/Button":9,"./components/Container":10}],8:[function(require,module,exports){
+var View = require('../lib/View');
+var Component = View.Component;
+var Button = require('./components/Button');
+function create(handlers) {
+    var mainComponent = Component(function mainView(initialBindings) {
+        var element = document.createElement('div');
+        element.classList.add('overlay');
+        element.classList.add('tutorial');
+        var title = document.createElement('h1');
+        title.textContent = 'How to play';
+        element.appendChild(title);
+        var explanationBodyText = document.createElement('p');
+        explanationBodyText.textContent = [
+            'Hit the correct direction to get points. The arrow points towards the current direction',
+            'to hit. Hitting the wrong direction will lose you points and cost you a life. Lose too',
+            'many lives and you will lose the game.'
+        ].join(' ');
+        element.appendChild(explanationBodyText);
+        var touchControlsExplanation = document.createElement('div');
+        var touchControlsExplanationText = document.createElement('p');
+        touchControlsExplanationText.textContent = 'Hit the sides of the screen.';
+        touchControlsExplanation.appendChild(touchControlsExplanationText);
+        var touchControlsPicture = document.createElement('div');
+        touchControlsPicture.classList.add('touch-controls-picture');
+        touchControlsPicture.innerHTML = "\n                <table>\n                    <tr>\n                        <td></td>\n                        <td class=\"outlined\">&uarr;</td>\n                        <td></td>\n                    </tr>\n                    <tr>\n                        <td class=\"outlined\">&larr;</td>\n                        <td></td>\n                        <td class=\"outlined\">&rarr;</td>\n                    </tr>\n                    <tr>\n                        <td></td>\n                        <td class=\"outlined\">&darr;</td>\n                        <td></td>\n                   </tr>\n               </table>\n            ";
+        touchControlsExplanation.appendChild(touchControlsPicture);
+        element.appendChild(touchControlsExplanation);
+        var literallyJustTheWordOr = document.createElement('p');
+        literallyJustTheWordOr.textContent = 'Or:';
+        literallyJustTheWordOr.classList.add('just-the-word-or');
+        element.appendChild(literallyJustTheWordOr);
+        var keyboardControlsExplanation = document.createElement('div');
+        var keyboardControlsExplanationText = document.createElement('p');
+        keyboardControlsExplanationText.textContent = 'Press the arrow keys.';
+        keyboardControlsExplanation.appendChild(keyboardControlsExplanationText);
+        var keyboardControlsPicture = document.createElement('div');
+        keyboardControlsPicture.innerHTML = "\n                <table>\n                    <tr>\n                        <td></td>\n                        <td class=\"outlined\">&uarr;</td>\n                        <td></td>\n                    </tr>\n                    <tr>\n                        <td class=\"outlined\">&larr;</td>\n                        <td class=\"outlined\">&darr;</td>\n                        <td class=\"outlined\">&rarr;</td>\n                    </tr>\n\n               </table>\n            ";
+        keyboardControlsExplanation.appendChild(keyboardControlsPicture);
+        element.appendChild(keyboardControlsExplanation);
+        return {
+            element: element,
+            methods: null
+        };
+    }, function mainController(methods, services) {
+    }, function initialBindings(services) {
+    })(null);
+    return mainComponent(Button({
+        label: 'Play'
+    }, {
+        click: handlers.closeTutorial
+    })());
+}
+exports.create = create;
+
+},{"../lib/View":16,"./components/Button":9}],9:[function(require,module,exports){
 var View = require('../../lib/View');
 var Component = View.Component;
-module.exports = function (attrs, events) {
+module.exports = function CreateButton(attrs, events) {
     if (attrs === void 0) { attrs = {}; }
     if (events === void 0) { events = {}; }
     return Component(function view(initialBindings) {
@@ -461,7 +681,27 @@ module.exports = function (attrs, events) {
     })(null);
 };
 
-},{"../../lib/View":12}],7:[function(require,module,exports){
+},{"../../lib/View":16}],10:[function(require,module,exports){
+var View = require('../../lib/View');
+var Component = View.Component;
+module.exports = function CreateContainerElement(attrs) {
+    var children = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        children[_i - 1] = arguments[_i];
+    }
+    var element = document.createElement(attrs.elementType || 'div');
+    if (attrs.class) {
+        element.classList.add(attrs.class);
+    }
+    children.filter(function (child) {
+        return child != null;
+    }).forEach(function (child) {
+        element.appendChild(child);
+    });
+    return element;
+};
+
+},{"../../lib/View":16}],11:[function(require,module,exports){
 var HSL = require('./lib/HSL');
 function createSurface(hsl) {
     var surface = document.createElement('div');
@@ -502,7 +742,7 @@ function replaceWithNew(_Surface, newHSL) {
 }
 exports.replaceWithNew = replaceWithNew;
 
-},{"./lib/HSL":11}],8:[function(require,module,exports){
+},{"./lib/HSL":15}],12:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -579,7 +819,7 @@ exports.baseColourModels = {
     greyscale: new greyscaleColourModel()
 };
 
-},{}],9:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var HSL = require('./HSL');
 var ColourModel = require('./ColourModel');
 function randomTermGenerator(seed) {
@@ -595,7 +835,7 @@ function hslFromSeed(seed, colourModel) {
 }
 exports.hslFromSeed = hslFromSeed;
 
-},{"./ColourModel":8,"./HSL":11}],10:[function(require,module,exports){
+},{"./ColourModel":12,"./HSL":15}],14:[function(require,module,exports){
 var _Event = (function () {
     function _Event(childEvents) {
         var _this = this;
@@ -619,7 +859,7 @@ var _Event = (function () {
 })();
 module.exports = _Event;
 
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var HSL = (function () {
     function HSL(hue, saturation, lightness) {
         this.hue = hue;
@@ -651,7 +891,7 @@ var HSL = (function () {
 })();
 exports.HSL = HSL;
 
-},{}],12:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 function Component(View, controllerBody, initialBindings) {
     return function (services) {
         return function () {
@@ -664,7 +904,9 @@ function Component(View, controllerBody, initialBindings) {
             if (controllerBody) {
                 controllerBody(template.methods, services);
             }
-            children.forEach(function (child) {
+            children.filter(function (child) {
+                return child != null;
+            }).forEach(function (child) {
                 template.element.appendChild(child);
             });
             return template.element;
@@ -673,7 +915,7 @@ function Component(View, controllerBody, initialBindings) {
 }
 exports.Component = Component;
 
-},{}],13:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 function defaults(obj, _defaults) {
     var extendedObject = {};
     Object.keys(_defaults).forEach(function (key) {
@@ -729,14 +971,16 @@ function fn(obj) {
     return new _fn(obj);
 }
 
-},{}],14:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var GameModule = require('./Game/Game');
 var MainLoop = require('./Game/MainLoop');
 var GameScreen = require('./Screens/GameScreen');
 var MainScreen = require('./Screens/MainScreen');
+var ScoresScreen = require('./Screens/ScoresScreen');
 var GameOverOverlay = require('./Screens/GameOverOverlay');
+var TutorialOverlay = require('./Screens/TutorialOverlay');
+var DataStore = require('./Game/DataStore');
 document.addEventListener('DOMContentLoaded', function () {
-    /***/
     var mainContainer = document.getElementById('main-container');
     function clearMainContainer() {
         while (mainContainer.children.length) {
@@ -744,7 +988,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     var manageScreens = {
-        gameStart: function () {
+        gameStart: function (showTutorial) {
             clearMainContainer();
             var game = new GameModule.Game();
             var mainLoop = new MainLoop(game);
@@ -754,31 +998,66 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             var mainElement = GameScreen.create(servicesPackage);
             mainContainer.appendChild(mainElement);
-            mainLoop.start();
+            if (showTutorial) {
+                var tutorialOverlay = manageScreens.tutorialOverlay({
+                    closeTutorial: function () {
+                        mainLoop.start();
+                        mainContainer.removeChild(tutorialOverlay);
+                    }
+                });
+                mainContainer.appendChild(tutorialOverlay);
+            }
+            else {
+                mainLoop.start();
+            }
             game.events.LOST_GAME.listen(function () {
                 mainLoop.pause();
-                manageScreens.gameOver();
+                mainContainer.appendChild(manageScreens.gameOverOverlay());
+                DataStore.incrementPlayedCount();
+                DataStore.setTopScore(game.points);
             });
         },
-        gameOver: function () {
-            var gameOverOverlay = GameOverOverlay.create({
+        /* Note: Basically done purely for convention, there's nothing to do yet that would
+         * require an additional function to call this rather than just calling it directly. */
+        tutorialOverlay: TutorialOverlay.create.bind(TutorialOverlay),
+        gameOverOverlay: function () {
+            return GameOverOverlay.create({
                 restartGame: function () {
-                    manageScreens.gameStart();
+                    manageScreens.gameStart(false);
                 },
                 mainMenu: function () {
                     manageScreens.mainMenu();
+                },
+                showScores: function () {
+                    manageScreens.showScores();
                 }
             });
-            mainContainer.appendChild(gameOverOverlay);
+        },
+        showScores: function () {
+            clearMainContainer();
+            mainContainer.appendChild(ScoresScreen.create({
+                mainMenuPress: function () {
+                    manageScreens.mainMenu();
+                }
+            }));
         },
         mainMenu: function () {
             clearMainContainer();
+            var firstRun = DataStore.getPlayedCount() <= 0;
             mainContainer.appendChild(MainScreen.create({
-                gameStartButtonPress: manageScreens.gameStart
+                gameStartButtonPress: function () {
+                    manageScreens.gameStart(firstRun);
+                },
+                tutorialButtonPress: !firstRun ? function () {
+                    manageScreens.gameStart(true);
+                } : null,
+                scoresButtonPress: function () {
+                    manageScreens.showScores();
+                }
             }));
         }
     };
     manageScreens.mainMenu();
 });
 
-},{"./Game/Game":1,"./Game/MainLoop":2,"./Screens/GameOverOverlay":3,"./Screens/GameScreen":4,"./Screens/MainScreen":5}]},{},[14]);
+},{"./Game/DataStore":1,"./Game/Game":2,"./Game/MainLoop":3,"./Screens/GameOverOverlay":4,"./Screens/GameScreen":5,"./Screens/MainScreen":6,"./Screens/ScoresScreen":7,"./Screens/TutorialOverlay":8}]},{},[18]);
