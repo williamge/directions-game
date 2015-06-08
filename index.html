@@ -9,8 +9,15 @@
                 padding: 0;
             }
 
+            html {
+                box-sizing: border-box;
+            }
+            *, *:before, *:after {
+                box-sizing: inherit;
+            }
+
             #main-container, .main-container {
-                font-family: arial;
+                font-family: arial sans-serif;
             }
 
             #screen {
@@ -28,14 +35,99 @@
                 background-color: hsla(0, 0%, 25%, 0.6);
             }
 
+            #main-menu #background-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+            }
+
+            #main-menu #background-container .arrow {
+                display: inline-block;
+                background-color: hsl(0, 0%, 95%);
+                color: hsl(0, 0%, 5%);
+                font-size: 2em;
+
+                width: 11.111vw;
+                height: 11.111vw;
+                text-align: center
+            }
+
+            #main-menu .buttons-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+            }
+
+            /* We're dynamically setting the transformX, the way we are doing ti causes the transition to be applied for the initial position of the element, when it should only be visible when it's already positioned to the right and is ready to animate the slide to the left. As a result we are only adding the transition for the transform when we can be sure that the element is positioned and ready for the transition, then add this class for the transition. */
+            #main-menu #background-container .arrow.ready-for-transition {
+                transition: transform 0.75s;
+            }
+
+            #main-menu #background-container .arrow.active {
+
+            }
+
             #main-menu button,
-            .overlay button {
+            .overlay button,
+            #scores button{
                 background-color: pink;
                 font-size: 1.5em;
                 display: block;
                 margin-left: auto;
                 margin-right: auto;
                 padding: .75em;
+            }
+
+            #scores {
+                font-family: arial sans-serif;
+                font-size: 2em;
+                margin-left: 2em;
+                margin-right: 2em;
+            }
+
+            #scores ol {
+
+            }
+
+            .tutorial {
+                text-align: center
+            }
+
+            .tutorial table {
+                border: 2px solid black;
+                background-color: hsl(0, 0%, 25%);
+            }
+
+            .tutorial table td {
+                width: 1.75em;
+                height: 1.75em;
+                text-align: center;
+            }
+
+            .tutorial table {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .tutorial table .outlined {
+                border: 2px solid hsl(0, 0%, 80%);
+                color: hsl(0, 0%, 95%);
+            }
+
+            .tutorial .touch-controls-picture table .outlined {
+                border: 2px solid hsl(0, 0%, 80%);
+                color: hsl(0, 0%, 5%);
+                background-color: hsl(0, 0%, 40%);
+            }
+
+            .tutorial .just-the-word-or {
+                font-size: 2em;
+                background-color: hsla(0, 0%, 25%, 0.6);
+                font-weight: bold;
             }
 
             .osd {
@@ -72,11 +164,15 @@
                 color: red;
             }
 
-            .osd .score {
+            .osd .score-bar {
                 position: absolute;
-                font-size: 2em;
                 top: 0.5em;
                 left: 0.5em;
+
+                font-size: 2em
+            }
+
+            .osd .score {
                 transition: opacity .25s, transform .25s;
             }
 

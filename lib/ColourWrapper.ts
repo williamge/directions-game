@@ -10,7 +10,7 @@ export function randomTermGenerator(seed: number): number {
     return random;
 }
 
-export function hslFromSeed(seed: number, colourModel: ColourModel.ColourModel) {
+export function hslFromSeed(seed: number, colourModel ?: ColourModel.ColourModel) {
     colourModel = colourModel || new ColourModel.ColourModel();
     var randomTerm = randomTermGenerator(seed);
     return new HSL.HSL(

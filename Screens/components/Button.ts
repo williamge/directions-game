@@ -1,7 +1,7 @@
 import View = require('../../lib/View')
 let Component = View.Component;
 
-export = function(attrs: {
+export = function CreateButton(attrs: {
     label ?: string
 } = {}, events: any ={}) {
     return Component<{

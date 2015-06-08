@@ -18,7 +18,9 @@ export function Component<T, U>(
                 controllerBody(template.methods, services);
             }
 
-            children.forEach((child) => {
+            children.filter((child) => {
+                return child != null;
+            }).forEach((child) => {
                 template.element.appendChild(child);
             });
 

@@ -1,7 +1,6 @@
 git stash
 git checkout -f gh-pages
-git pull --rebase origin gh-pages
-git merge master
+git merge master --strategy-option theirs
 npm run postinstall
 git add main.js
 git commit -m "Automatic autopublish"
