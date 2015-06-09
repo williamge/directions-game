@@ -30,11 +30,17 @@ document.addEventListener('DOMContentLoaded', function(){
             };
 
             let mainElement = GameScreen.create(servicesPackage);
+
+            //TODO(wg): consider moving this to the screen's code, kind of overstepping our boundaries here
+            if (showTutorial) {
+                mainElement.classList.add('blurred');
+            }
             mainContainer.appendChild(mainElement);
 
             if (showTutorial) {
                 let tutorialOverlay = manageScreens.tutorialOverlay({
                     closeTutorial: () => {
+                        mainElement.classList.remove('blurred');
                         mainLoop.start();
                         mainContainer.removeChild(tutorialOverlay);
                     }

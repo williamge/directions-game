@@ -15,15 +15,23 @@ export function create(handlers: {
             let element = document.createElement('div');
             element.id = 'scores';
 
-            let scoresList = document.createElement('ol');
+            let scoresList = DataStore.getTopScores(15);
 
-            DataStore.getTopScores(15).forEach((score) => {
-                let scoreElem = document.createElement('li');
-                scoreElem.textContent = score.toString();
-                scoresList.appendChild(scoreElem);
-            });
+            if (scoresList.length == 0) {
+                let emptyScoresText = document.createElement('p');
+                emptyScoresText.textContent = 'No scores to display';
+                element.appendChild(emptyScoresText);
+            } else {
+                let scoresListElem = document.createElement('ol');
 
-            element.appendChild(scoresList);
+                scoresList.forEach((score) => {
+                    let scoreElem = document.createElement('li');
+                    scoreElem.textContent = score.toString();
+                    scoresListElem.appendChild(scoreElem);
+                });
+
+                element.appendChild(scoresListElem);
+            }
 
             return {
                 element,

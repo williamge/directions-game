@@ -16,7 +16,8 @@ interface SimpleServicePackage {
 
 export function create(servicesPackage: SimpleServicePackage) {
     let mainComponent = Component<{
-            newDirection: (oldDirection, newHSL) => void
+            newDirection: (oldDirection, newHSL) => void;
+            blurScreen: () => void;
     }, SimpleServicePackage>(
         function mainView(initialBindings) {
             let element = document.createElement('div');
@@ -36,6 +37,9 @@ export function create(servicesPackage: SimpleServicePackage) {
                                 surface = Surface.replaceWithNew(surface, newHSL);
                             }
                         });
+                },
+                blurScreen: () => {
+                    element.classList.add('blurred');
                 }
             };
 
@@ -47,6 +51,10 @@ export function create(servicesPackage: SimpleServicePackage) {
         function mainController(methods, services){
             services.game.events.NEW_DIRECTION.listen(function(e) {
                 methods.newDirection(e.oldDirection, ColourWrapper.hslFromSeed(Math.random(), services.game.colourModels[services.game.currentDirection]));
+            });
+
+            services.game.events.LOST_GAME.listen(function() {
+                methods.blurScreen();
             });
 
             [].slice.call(document.getElementsByTagName('body')).forEach(function(elem) {
@@ -238,8 +246,9 @@ export function create(servicesPackage: SimpleServicePackage) {
 
             function createLivesText(_lives) {
                 let outputText = '';
-                while (_lives-- > 0) {
-                    outputText = outputText + '+';
+                var i = 0;
+                while (i++ < _lives) {
+                    outputText = outputText + '\u2764';
                 }
                 return outputText;
             }
