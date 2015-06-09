@@ -127,12 +127,13 @@ var Game = (function () {
         return Game._RandomDirection();
     };
     Game.prototype.wrongMove = function () {
+        this.lives -= 1;
         this.events.WRONG_MOVE.emit(null);
         this.points -= 2;
         this.events.POINTS_DEDUCTED.emit({
             change: -2
         });
-        if (--this.lives <= 0) {
+        if (this.lives <= 0) {
             this.events.LOST_GAME.emit(null);
         }
     };
@@ -253,6 +254,9 @@ function create(servicesPackage) {
                         surface = Surface.replaceWithNew(surface, newHSL);
                     }
                 });
+            },
+            blurScreen: function () {
+                element.classList.add('blurred');
             }
         };
         return {
@@ -262,6 +266,9 @@ function create(servicesPackage) {
     }, function mainController(methods, services) {
         services.game.events.NEW_DIRECTION.listen(function (e) {
             methods.newDirection(e.oldDirection, ColourWrapper.hslFromSeed(Math.random(), services.game.colourModels[services.game.currentDirection]));
+        });
+        services.game.events.LOST_GAME.listen(function () {
+            methods.blurScreen();
         });
         [].slice.call(document.getElementsByTagName('body')).forEach(function (elem) {
             var currentKeyDown;
@@ -407,8 +414,9 @@ function create(servicesPackage) {
         element.classList.add('lives');
         function createLivesText(_lives) {
             var outputText = '';
-            while (_lives-- > 0) {
-                outputText = outputText + '+';
+            var i = 0;
+            while (i++ < _lives) {
+                outputText = outputText + '\u2764';
             }
             return outputText;
         }
@@ -575,13 +583,21 @@ function create(handlers) {
     var mainComponent = Component(function mainView(initialBindings) {
         var element = document.createElement('div');
         element.id = 'scores';
-        var scoresList = document.createElement('ol');
-        DataStore.getTopScores(15).forEach(function (score) {
-            var scoreElem = document.createElement('li');
-            scoreElem.textContent = score.toString();
-            scoresList.appendChild(scoreElem);
-        });
-        element.appendChild(scoresList);
+        var scoresList = DataStore.getTopScores(15);
+        if (scoresList.length == 0) {
+            var emptyScoresText = document.createElement('p');
+            emptyScoresText.textContent = 'No scores to display';
+            element.appendChild(emptyScoresText);
+        }
+        else {
+            var scoresListElem = document.createElement('ol');
+            scoresList.forEach(function (score) {
+                var scoreElem = document.createElement('li');
+                scoreElem.textContent = score.toString();
+                scoresListElem.appendChild(scoreElem);
+            });
+            element.appendChild(scoresListElem);
+        }
         return {
             element: element,
             methods: null
@@ -997,10 +1013,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 mainLoop: mainLoop
             };
             var mainElement = GameScreen.create(servicesPackage);
+            //TODO(wg): consider moving this to the screen's code, kind of overstepping our boundaries here
+            if (showTutorial) {
+                mainElement.classList.add('blurred');
+            }
             mainContainer.appendChild(mainElement);
             if (showTutorial) {
                 var tutorialOverlay = manageScreens.tutorialOverlay({
                     closeTutorial: function () {
+                        mainElement.classList.remove('blurred');
                         mainLoop.start();
                         mainContainer.removeChild(tutorialOverlay);
                     }
