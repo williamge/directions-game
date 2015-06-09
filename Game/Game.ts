@@ -101,13 +101,14 @@ export class Game {
     }
 
     wrongMove() {
+        this.lives -= 1;
         this.events.WRONG_MOVE.emit(null);
         this.points -= 2;
         this.events.POINTS_DEDUCTED.emit({
             change: -2
         });
 
-        if (--this.lives <= 0) {
+        if (this.lives <= 0) {
             this.events.LOST_GAME.emit(null);
         }
     }
