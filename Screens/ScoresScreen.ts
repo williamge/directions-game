@@ -13,7 +13,6 @@ export function create(handlers: {
     let mainComponent = Component<void, void>(
         function mainView(initialBindings) {
             let element = document.createElement('div');
-            element.id = 'scores';
 
             let scoresList = DataStore.getTopScores(15);
 
@@ -47,7 +46,9 @@ export function create(handlers: {
     )(null);
 
     return Container(
-        {},
+        {
+            'class': 'scores'
+        },
         Button({
             label: 'Back to main menu'
         }, {
