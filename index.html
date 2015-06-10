@@ -7,6 +7,7 @@
             body {
                 margin: 0;
                 padding: 0;
+                font-family: arial, sans-serif;
             }
 
             html {
@@ -14,10 +15,11 @@
             }
             *, *:before, *:after {
                 box-sizing: inherit;
+                font-family: arial, sans-serif;
             }
 
             #main-container, .main-container {
-                font-family: arial sans-serif;
+                
             }
 
             #screen {
@@ -62,35 +64,29 @@
                 right: 0;
             }
 
-            /* We're dynamically setting the transformX, the way we are doing ti causes the transition to be applied for the initial position of the element, when it should only be visible when it's already positioned to the right and is ready to animate the slide to the left. As a result we are only adding the transition for the transform when we can be sure that the element is positioned and ready for the transition, then add this class for the transition. */
-            #main-menu #background-container .arrow.ready-for-transition {
-                transition: transform 0.75s;
-            }
-
             #main-menu #background-container .arrow.active {
 
             }
 
             #main-menu button,
             .overlay button,
-            #scores button{
-                background-color: pink;
+            .scores button{
+                color: hsl(0, 0%, 95%);
+                background-color: hsl(0, 0%, 30%);
                 font-size: 1.5em;
                 display: block;
-                margin-left: auto;
-                margin-right: auto;
-                padding: .75em;
+                margin: 1em auto;
+                padding: .5em .75em;
             }
 
-            #scores {
+            .scores {
                 font-family: arial sans-serif;
-                font-size: 2em;
                 margin-left: 2em;
                 margin-right: 2em;
             }
 
-            #scores ol {
-
+            .scores ol {
+                font-size: 2em;
             }
 
             .tutorial {
@@ -169,6 +165,10 @@
                 color: red;
             }
 
+            .osd .lives {
+                color: red;
+            }
+
             .osd .score-bar {
                 position: absolute;
                 top: 0.5em;
@@ -243,6 +243,16 @@
                 position: absolute;
                 top: 0;
                 right: 0;
+            }
+
+            .osd .timer-speed-up-text {
+                height: 1.5em;
+                width: 50%;
+                position: absolute;
+                top: 0;
+                right: 0;
+                text-align: center;
+                transition: transform .5s;
             }
 
             .surface {
