@@ -284,20 +284,41 @@ export function create(servicesPackage: SimpleServicePackage) {
     )(servicesPackage);
 
      let timerComponent = Component<{
-             updateTimer: (timeLeft) => void
+         updateTimer: (timeLeft) => void;
+         makeSpeedUpText: () => void;
      }, SimpleServicePackage>(
          function timerView() {
+             let baseElement = document.createElement('div');
+             baseElement.id = 'timer-base';
+
              let element = document.createElement('div');
              element.id = 'timer';
+
+             baseElement.appendChild(element);
 
              let methods = {
                  updateTimer: (timeLeft) => {
                      element.style.transform = `scaleX(${timeLeft / 100})`;
+                 },
+                 makeSpeedUpText: () => {
+                     let speedElem = document.createElement('div');
+                     speedElem.classList.add('timer-speed-up-text');
+                     speedElem.textContent = 'Speed up!';
+
+                     baseElement.appendChild(speedElem);
+
+                     let __dummy = speedElem.offsetWidth;
+
+                     speedElem.style.transform = 'scale(2.0, 2.0)';
+
+                     setTimeout(function(){
+                         baseElement.removeChild(speedElem);
+                     }, 500);
                  }
              };
 
              return {
-                 element,
+                 element: baseElement,
                  methods
              };
          },
@@ -305,6 +326,9 @@ export function create(servicesPackage: SimpleServicePackage) {
              services.mainLoop.events.TICK.listen(() => {
                  methods.updateTimer(services.game.timeLeft);
              });
+             services.game.events.SPEED_UP.listen(() => {
+                 methods.makeSpeedUpText();
+             })
          }
      )(servicesPackage);
 

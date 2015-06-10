@@ -32,7 +32,10 @@ export class Game {
     colourModels: any;
     currentDirection;
     points: number = 0;
-    timeLeft: number = 100;
+    private startingTimeLeft = 100;
+    timeLeft: number = this.startingTimeLeft;
+
+    private movesMade = 0;
 
     lives = 5;
 
@@ -49,7 +52,8 @@ export class Game {
         POINTS_GAINED: new _Event<{
                 change: number
             }>(),
-        LOST_GAME: new _Event<void>()
+        LOST_GAME: new _Event<void>(),
+        SPEED_UP: new _Event<void>()
     };
 
     static directions = {
@@ -101,6 +105,8 @@ export class Game {
     }
 
     wrongMove() {
+        this.movesMade++;
+
         this.lives -= 1;
         this.events.WRONG_MOVE.emit(null);
         this.points -= 2;
@@ -114,7 +120,14 @@ export class Game {
     }
 
     rightMove() {
-        this.timeLeft = 100;
+        this.movesMade++;
+
+        if (this.movesMade % 10 == 0 && this.startingTimeLeft > 40) {
+            this.startingTimeLeft -= 10;
+            this.events.SPEED_UP.emit(null);
+        }
+        this.timeLeft = this.startingTimeLeft;
+
         this.events.RIGHT_MOVE.emit(null);
         this.points += 1;
         this.events.POINTS_GAINED.emit({
