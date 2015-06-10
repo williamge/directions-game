@@ -41,26 +41,51 @@ export function create(handlers: {
                 firstArrow.classList.add('arrow');
                 firstArrow.classList.add('active');
 
-                firstArrow.innerHTML = ['&larr;', '&rarr;', '&uarr;', '&darr;'][Math.floor(Math.random() * 4)];
+                let randomDirection = [
+                    'left',
+                    'right',
+                    'up',
+                    'down'
+                ][Math.round(Math.random() * 3)];
+
+                let directionToUnicode = {
+                    'left': '&larr;',
+                    'right': '&rarr;',
+                    'up': '&uarr;',
+                    'down': '&darr;'
+                };
+
+                firstArrow.innerHTML = directionToUnicode[randomDirection];
 
                 background.appendChild(firstArrow);
 
                 let computedTransform = background.clientWidth - firstArrow.offsetLeft - firstArrow.offsetWidth;
 
-                firstArrow.style.transform = `translateX(${computedTransform}px)`;
+                let animationDirections = {
+                    'left': 'translateX(',
+                    'right': 'translateX(-',
+                    'up': 'translateY(',
+                    'down': 'translateY(-'
+                };
+
+                let directionToMove = animationDirections[randomDirection];
+
+                firstArrow.style.transform = `${directionToMove}${computedTransform}px)`;
 
                 firstArrow.style.backgroundColor = ColourWrapper.hslFromSeed(Math.random(), _backgroundColourModel).toCSSString();
 
                 //HACK(wg): Done to force reflow of the DOM layout and start the transition, otherwise the transition is skipped.
                 let __notUsed = firstArrow.offsetHeight;
 
+                let transitionTime = 350;
+
                 //Now that the element is in position, we can start the transition.
                 //Since we're setting the position of the element dynamically, this is a safety feature to prevent a CSS transition from being applied during our initial positioning -- we only want the transition to run to move the element from right to left, not for setting it up.
-                firstArrow.classList.add('ready-for-transition');
+                firstArrow.style.transition = `transform ${transitionTime}ms`;
                 firstArrow.style.transform = '';
                 setTimeout(function transitionEnd(){
                     next();
-                }, 750);
+                }, transitionTime);
             }
 
             (function addArrowsToScreenQuiteContinuously() {
