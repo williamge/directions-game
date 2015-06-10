@@ -88,7 +88,9 @@ var _GameColourModelDown = (function (_super) {
 var Game = (function () {
     function Game(options) {
         this.points = 0;
-        this.timeLeft = 100;
+        this.startingTimeLeft = 100;
+        this.timeLeft = this.startingTimeLeft;
+        this.movesMade = 0;
         this.lives = 5;
         this.events = {
             NEW_DIRECTION: new _Event(),
@@ -96,7 +98,8 @@ var Game = (function () {
             RIGHT_MOVE: new _Event(),
             POINTS_DEDUCTED: new _Event(),
             POINTS_GAINED: new _Event(),
-            LOST_GAME: new _Event()
+            LOST_GAME: new _Event(),
+            SPEED_UP: new _Event()
         };
         this._mySuperCoolColourModels = {
             left: new _GameColourModelLeft,
@@ -127,6 +130,7 @@ var Game = (function () {
         return Game._RandomDirection();
     };
     Game.prototype.wrongMove = function () {
+        this.movesMade++;
         this.lives -= 1;
         this.events.WRONG_MOVE.emit(null);
         this.points -= 2;
@@ -138,7 +142,12 @@ var Game = (function () {
         }
     };
     Game.prototype.rightMove = function () {
-        this.timeLeft = 100;
+        this.movesMade++;
+        if (this.movesMade % 10 == 0 && this.startingTimeLeft > 40) {
+            this.startingTimeLeft -= 10;
+            this.events.SPEED_UP.emit(null);
+        }
+        this.timeLeft = this.startingTimeLeft;
         this.events.RIGHT_MOVE.emit(null);
         this.points += 1;
         this.events.POINTS_GAINED.emit({
@@ -443,20 +452,37 @@ function create(servicesPackage) {
         };
     })(servicesPackage);
     var timerComponent = Component(function timerView() {
+        var baseElement = document.createElement('div');
+        baseElement.id = 'timer-base';
         var element = document.createElement('div');
         element.id = 'timer';
+        baseElement.appendChild(element);
         var methods = {
             updateTimer: function (timeLeft) {
                 element.style.transform = "scaleX(" + timeLeft / 100 + ")";
+            },
+            makeSpeedUpText: function () {
+                var speedElem = document.createElement('div');
+                speedElem.classList.add('timer-speed-up-text');
+                speedElem.textContent = 'Speed up!';
+                baseElement.appendChild(speedElem);
+                var __dummy = speedElem.offsetWidth;
+                speedElem.style.transform = 'scale(2.0, 2.0)';
+                setTimeout(function () {
+                    baseElement.removeChild(speedElem);
+                }, 500);
             }
         };
         return {
-            element: element,
+            element: baseElement,
             methods: methods
         };
     }, function timerComponent(methods, services) {
         services.mainLoop.events.TICK.listen(function () {
             methods.updateTimer(services.game.timeLeft);
+        });
+        services.game.events.SPEED_UP.listen(function () {
+            methods.makeSpeedUpText();
         });
     })(servicesPackage);
     var touchControlsComponent = Component(function touchControlsView(bindings) {
@@ -528,20 +554,40 @@ function create(handlers) {
             var firstArrow = document.createElement('div');
             firstArrow.classList.add('arrow');
             firstArrow.classList.add('active');
-            firstArrow.innerHTML = ['&larr;', '&rarr;', '&uarr;', '&darr;'][Math.floor(Math.random() * 4)];
+            var randomDirection = [
+                'left',
+                'right',
+                'up',
+                'down'
+            ][Math.round(Math.random() * 3)];
+            var directionToUnicode = {
+                'left': '&larr;',
+                'right': '&rarr;',
+                'up': '&uarr;',
+                'down': '&darr;'
+            };
+            firstArrow.innerHTML = directionToUnicode[randomDirection];
             background.appendChild(firstArrow);
             var computedTransform = background.clientWidth - firstArrow.offsetLeft - firstArrow.offsetWidth;
-            firstArrow.style.transform = "translateX(" + computedTransform + "px)";
+            var animationDirections = {
+                'left': 'translateX(',
+                'right': 'translateX(-',
+                'up': 'translateY(',
+                'down': 'translateY(-'
+            };
+            var directionToMove = animationDirections[randomDirection];
+            firstArrow.style.transform = "" + directionToMove + computedTransform + "px)";
             firstArrow.style.backgroundColor = ColourWrapper.hslFromSeed(Math.random(), _backgroundColourModel).toCSSString();
             //HACK(wg): Done to force reflow of the DOM layout and start the transition, otherwise the transition is skipped.
             var __notUsed = firstArrow.offsetHeight;
+            var transitionTime = 350;
             //Now that the element is in position, we can start the transition.
             //Since we're setting the position of the element dynamically, this is a safety feature to prevent a CSS transition from being applied during our initial positioning -- we only want the transition to run to move the element from right to left, not for setting it up.
-            firstArrow.classList.add('ready-for-transition');
+            firstArrow.style.transition = "transform " + transitionTime + "ms";
             firstArrow.style.transform = '';
             setTimeout(function transitionEnd() {
                 next();
-            }, 750);
+            }, transitionTime);
         }
         (function addArrowsToScreenQuiteContinuously() {
             addArrowToScreen(function next() {
@@ -582,7 +628,6 @@ var DataStore = require('../Game/DataStore');
 function create(handlers) {
     var mainComponent = Component(function mainView(initialBindings) {
         var element = document.createElement('div');
-        element.id = 'scores';
         var scoresList = DataStore.getTopScores(15);
         if (scoresList.length == 0) {
             var emptyScoresText = document.createElement('p');
@@ -605,7 +650,9 @@ function create(handlers) {
     }, function mainController(methods, services) {
     }, function initialBindings(services) {
     })(null);
-    return Container({}, Button({
+    return Container({
+        'class': 'scores'
+    }, Button({
         label: 'Back to main menu'
     }, {
         click: handlers.mainMenuPress
