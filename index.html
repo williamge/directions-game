@@ -19,7 +19,7 @@
             }
 
             #main-container, .main-container {
-                
+
             }
 
             #screen {
@@ -71,8 +71,8 @@
             #main-menu button,
             .overlay button,
             .scores button{
-                color: hsl(0, 0%, 95%);
-                background-color: hsl(0, 0%, 30%);
+                color: hsl(0, 0%, 5%);
+                background-color: hsl(0, 0%, 85%);
                 font-size: 1.5em;
                 display: block;
                 margin: 1em auto;
@@ -147,20 +147,24 @@
             .osd .direction {
                 font-size: 20vw;
                 transition: color .25s,  opacity .25s, transform .25s;
+                -webkit-transition: color .25s,  opacity .25s, -webkit-transform .25s;
 
                 position: absolute;
                 left: 50%;
                 top: 50%;
                 transform: translateX(-50%) translateY(-50%);
+                -webkit-transform: translateX(-50%) translateY(-50%);
             }
 
             .osd .direction.exploded {
                 transform: translateX(-50%) translateY(-50%) scale(4.0, 4.0);
+                -webkit-transform: translateX(-50%) translateY(-50%) scale(4.0, 4.0);
                 opacity: 0;
             }
 
             .osd .direction.imploded {
                 transform: translateX(-50%) translateY(-50%) scale(3.0, 3.0);
+                -webkit-transform: translateX(-50%) translateY(-50%) scale(3.0, 3.0);
                 opacity: 0;
                 color: red;
             }
@@ -179,17 +183,20 @@
 
             .osd .score {
                 transition: opacity .25s, transform .25s;
+                -webkit-transition: opacity .25s, -webkit-transform .25s;
             }
 
             .osd .score.animate-good {
                 opacity: 0.5;
                 transform: scale(1.5, 1.5);
+                -webkit-transform: scale(1.5, 1.5);
             }
 
             .osd .score.animate-bad {
                 color: red;
                 opacity: 0.5;
                 transform: scale(0.5, 0.5);
+                -webkit-transform: scale(0.5, 0.5);
             }
 
             .osd .touch-controls {
@@ -253,6 +260,7 @@
                 right: 0;
                 text-align: center;
                 transition: transform .5s;
+                -webkit-transition: -webkit-transform .5s;
             }
 
             .surface {
@@ -261,22 +269,27 @@
                 height: 100%;
                 width: 100%;
                 transition: transform .25s;
+                -webkit-transition: -webkit-transform .25s;
             }
 
             .surface.right {
                 transform: translate(100%, 0%);
+                -webkit-transform: translate(100%, 0%);
             }
 
             .surface.left {
                 transform: translate(-100%, 0%);
+                -webkit-transform: translate(-100%, 0%);
             }
 
             .surface.up {
                 transform: translate(0%, -100%);
+                -webkit-transform: translate(0%, -100%);
             }
 
             .surface.down {
                 transform: translate(0%, 100%);
+                -webkit-transform: translate(0%, 100%);
             }
 
         </style>
