@@ -152,12 +152,12 @@ export function create(servicesPackage: SimpleServicePackage) {
                      var toImplode: HTMLElement = <HTMLElement> makeDirectionElement(directionsMapping[currentDirection]);
                      element.appendChild(toImplode);
 
-                     //Note: this needs to be in a timeout since the transition will only take effect if the element is added first without our transition
-                     //class, and THEN given a new class. The timeout just gives a chance for the element to be added to the DOM before we add our transition class.
+                     //Note: this needs to be done since the transition will only take effect if the element is added first without our transition
+                     //class, and THEN given a new class. The dummy statement just gives a chance for the element to be added to the DOM before we add our transition class.
                      //We don't need a transition in the above function for the NEW_DIRECTION handler since that's adding a class to an element that is already in the DOM.
-                     setTimeout(function() {
-                         toImplode.classList.add('imploded');
-                     }, 10);
+
+                     let __dummy = toImplode.offsetHeight;
+                     toImplode.classList.add('imploded');
 
                      function implodeThatStuff(elem) {
                          return function() {
@@ -299,6 +299,7 @@ export function create(servicesPackage: SimpleServicePackage) {
              let methods = {
                  updateTimer: (timeLeft) => {
                      element.style.transform = `scaleX(${timeLeft / 100})`;
+                     element.style['-webkit-transform'] = `scaleX(${timeLeft / 100})`;
                  },
                  makeSpeedUpText: () => {
                      let speedElem = document.createElement('div');
@@ -310,6 +311,7 @@ export function create(servicesPackage: SimpleServicePackage) {
                      let __dummy = speedElem.offsetWidth;
 
                      speedElem.style.transform = 'scale(2.0, 2.0)';
+                     speedElem.style['-webkit-transform'] = 'scale(2.0, 2.0)';
 
                      setTimeout(function(){
                          baseElement.removeChild(speedElem);

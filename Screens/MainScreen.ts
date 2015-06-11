@@ -71,6 +71,7 @@ export function create(handlers: {
                 let directionToMove = animationDirections[randomDirection];
 
                 firstArrow.style.transform = `${directionToMove}${computedTransform}px)`;
+                firstArrow.style['-webkit-transform'] = `${directionToMove}${computedTransform}px)`;
 
                 firstArrow.style.backgroundColor = ColourWrapper.hslFromSeed(Math.random(), _backgroundColourModel).toCSSString();
 
@@ -82,7 +83,9 @@ export function create(handlers: {
                 //Now that the element is in position, we can start the transition.
                 //Since we're setting the position of the element dynamically, this is a safety feature to prevent a CSS transition from being applied during our initial positioning -- we only want the transition to run to move the element from right to left, not for setting it up.
                 firstArrow.style.transition = `transform ${transitionTime}ms`;
+                firstArrow.style['-webkit-transition'] = `-webkit-transform ${transitionTime}ms`;
                 firstArrow.style.transform = '';
+                firstArrow.style['-webkit-transform'] = '';
                 setTimeout(function transitionEnd(){
                     next();
                 }, transitionTime);
