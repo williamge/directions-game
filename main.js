@@ -352,12 +352,11 @@ function create(servicesPackage) {
             wrongMoveImplodeDirection: function (currentDirection) {
                 var toImplode = makeDirectionElement(directionsMapping[currentDirection]);
                 element.appendChild(toImplode);
-                //Note: this needs to be in a timeout since the transition will only take effect if the element is added first without our transition
-                //class, and THEN given a new class. The timeout just gives a chance for the element to be added to the DOM before we add our transition class.
+                //Note: this needs to be done since the transition will only take effect if the element is added first without our transition
+                //class, and THEN given a new class. The dummy statement just gives a chance for the element to be added to the DOM before we add our transition class.
                 //We don't need a transition in the above function for the NEW_DIRECTION handler since that's adding a class to an element that is already in the DOM.
-                setTimeout(function () {
-                    toImplode.classList.add('imploded');
-                }, 10);
+                var __dummy = toImplode.offsetHeight;
+                toImplode.classList.add('imploded');
                 function implodeThatStuff(elem) {
                     return function () {
                         elem.parentNode.removeChild(elem);
@@ -460,6 +459,7 @@ function create(servicesPackage) {
         var methods = {
             updateTimer: function (timeLeft) {
                 element.style.transform = "scaleX(" + timeLeft / 100 + ")";
+                element.style['-webkit-transform'] = "scaleX(" + timeLeft / 100 + ")";
             },
             makeSpeedUpText: function () {
                 var speedElem = document.createElement('div');
@@ -468,6 +468,7 @@ function create(servicesPackage) {
                 baseElement.appendChild(speedElem);
                 var __dummy = speedElem.offsetWidth;
                 speedElem.style.transform = 'scale(2.0, 2.0)';
+                speedElem.style['-webkit-transform'] = 'scale(2.0, 2.0)';
                 setTimeout(function () {
                     baseElement.removeChild(speedElem);
                 }, 500);
@@ -577,6 +578,7 @@ function create(handlers) {
             };
             var directionToMove = animationDirections[randomDirection];
             firstArrow.style.transform = "" + directionToMove + computedTransform + "px)";
+            firstArrow.style['-webkit-transform'] = "" + directionToMove + computedTransform + "px)";
             firstArrow.style.backgroundColor = ColourWrapper.hslFromSeed(Math.random(), _backgroundColourModel).toCSSString();
             //HACK(wg): Done to force reflow of the DOM layout and start the transition, otherwise the transition is skipped.
             var __notUsed = firstArrow.offsetHeight;
@@ -584,7 +586,9 @@ function create(handlers) {
             //Now that the element is in position, we can start the transition.
             //Since we're setting the position of the element dynamically, this is a safety feature to prevent a CSS transition from being applied during our initial positioning -- we only want the transition to run to move the element from right to left, not for setting it up.
             firstArrow.style.transition = "transform " + transitionTime + "ms";
+            firstArrow.style['-webkit-transition'] = "-webkit-transform " + transitionTime + "ms";
             firstArrow.style.transform = '';
+            firstArrow.style['-webkit-transform'] = '';
             setTimeout(function transitionEnd() {
                 next();
             }, transitionTime);
