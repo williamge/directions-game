@@ -1,3 +1,11 @@
+
+/**
+ * Helper function to move a number from one range to another
+ * @param  {number}        value         Value to be range-transformed
+ * @param  {Array<number>} originalRange Tuple for the initial range which value is in, in form [start, end]
+ * @param  {Array<number>} newRange      Tuple for the range which value should be transformed to, in form [start, end]
+ * @return {number}                      value transformed to the new range
+ */
 export function changeRange(value: number, originalRange: Array<number>, newRange: Array<number>): number {
 
     newRange = newRange || [0, 1];
@@ -13,6 +21,9 @@ interface ColourModelMapping{
     lightness?: (number) => number;
 }
 
+/**
+ * Default colour model, maps to all values of a HSL spectrum
+ */
 export class ColourModel implements ColourModelMapping{
 
     constructor(mappings ?: ColourModelMapping){
@@ -41,6 +52,9 @@ export class ColourModel implements ColourModelMapping{
     }
 }
 
+/**
+ * Plain looking colour model (medium saturation, high lightness, full hue)
+ */
 export class plainColourModel extends ColourModel{
     hue(term) {
         return changeRange(term, [0, 1], [0, 360]);
@@ -53,6 +67,9 @@ export class plainColourModel extends ColourModel{
     }
 }
 
+/**
+ * Greyscale colour model (no saturation or hue, full lightness)
+ */
 export class greyscaleColourModel extends ColourModel{
     hue(term) {
         return changeRange(term, [0, 1], [0, 0]);

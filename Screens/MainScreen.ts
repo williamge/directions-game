@@ -36,6 +36,9 @@ export function create(handlers: {
 
             element.appendChild(background);
 
+            /**
+             * Adds an arrow to the screen for the background animation
+             */
             function addArrowToScreen(next) {
                 let firstArrow = document.createElement('div');
                 firstArrow.classList.add('arrow');
@@ -91,6 +94,7 @@ export function create(handlers: {
                 }, transitionTime);
             }
 
+            //Continuously adds arrows to the background animation for the screen
             (function addArrowsToScreenQuiteContinuously() {
                 addArrowToScreen(function next(){
                     setTimeout(addArrowsToScreenQuiteContinuously, 1);

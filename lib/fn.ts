@@ -1,3 +1,7 @@
+/**
+ * Various helper functions.
+ * @deprecated due to low usage 
+ */
 
 interface forEachFunction {
     (element, index, context): any

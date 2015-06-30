@@ -1,9 +1,17 @@
 import View = require('../../lib/View')
 let Component = View.Component;
 
-export = function CreateButton(attrs: {
-    label ?: string
-} = {}, events: any ={}) {
+/**
+ * Creates a generic listenable button
+ * @param {string}} attrs         
+ * @param {any} events 
+ */
+export = function CreateButton(
+    attrs: {
+        label ?: string
+    } = {}, 
+    events: any = {}
+) {
     return Component<{
         addClickListener: (cb) => void
     }, void>(

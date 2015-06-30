@@ -3,6 +3,7 @@ import _Event = require('../lib/Event')
 import ColourModel = require('../lib/ColourModel')
 
 //TODO(wg): one day when TypeScript supports it, these should be inline class expressions
+//Update: this looks like it's coming in TS 1.6, so look forward to that.
 class _GameColourModelLeft extends ColourModel.plainColourModel {
     hue(term) {
         return ColourModel.changeRange(term, [0, 1], [0, 90]);
@@ -27,6 +28,9 @@ class _GameColourModelDown extends ColourModel.plainColourModel {
     }
 }
 
+/**
+ * Core game class to handle main game logic.
+ */
 export class Game {
 
     colourModels: any;
@@ -70,6 +74,10 @@ export class Game {
         down: new _GameColourModelDown
     };
 
+    /**
+     * Just a helper for returning a direction based off of a numerical index
+     * @param {number} index 
+     */
     static _DirectionFromIndex(index) {
         return Game.directions[
             Object.keys(Game.directions)[
@@ -78,6 +86,9 @@ export class Game {
         ];
     }
 
+    /**
+     * Returns a random direction.
+     */
     static _RandomDirection() {
         return Game._DirectionFromIndex((Math.floor(Math.random() * 4)))
     }
@@ -92,6 +103,10 @@ export class Game {
         this.currentDirection = this.nextDirection();
     }
 
+    /**
+     * Runs one frame through the update loop. 
+     * @param {[type]} timeDelta [description]
+     */
     update(timeDelta) {
         this.timeLeft -= 0.05 * timeDelta;
         if (this.timeLeft <= 0) {
@@ -100,10 +115,18 @@ export class Game {
         }
     }
 
+    /**
+     * Returns the next direction in the game. 
+     */
     nextDirection() {
+        //Note: currently just calls Game._RandomDirection but could be changed in the future to use a different
+        //mechanism for selecting directions (i.e. deterministic, or a balanced random) 
         return Game._RandomDirection();
     }
 
+    /**
+     * Handles logic for what should happen when the user makes a wrong move.
+     */
     wrongMove() {
         this.movesMade++;
 
@@ -119,6 +142,9 @@ export class Game {
         }
     }
 
+    /**
+     * Handles logic for what should happen when the user makes a correct move.
+     */
     rightMove() {
         this.movesMade++;
 
@@ -135,6 +161,11 @@ export class Game {
         });
     }
 
+    /**
+     * Makes a move in the game for the given direction. Will handle calling rightMove or wrongMove based off
+     * of the given direction.
+     * @param {string} direction Direction to move in the game
+     */
     makeMove(direction) {
 
         if (direction !== this.currentDirection) {

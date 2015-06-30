@@ -7,17 +7,32 @@ import GameOverOverlay = require('./Screens/GameOverOverlay');
 import TutorialOverlay = require('./Screens/TutorialOverlay');
 import DataStore = require('./Game/DataStore');
 
+/**
+ * Main entry point.
+ */
 document.addEventListener('DOMContentLoaded', function(){
 
     let mainContainer = document.getElementById('main-container');
 
+    /**
+     * Removes all of the children of the main container. Should be called before
+     * switching to screens, probably shouldn't be called before adding an overlay. 
+     */
     function clearMainContainer() {
         while(mainContainer.children.length) {
             mainContainer.removeChild(mainContainer.children[0]);
         }
     }
 
+    /**
+     * Object to hold the different screen transitions for the game.
+     * @type {Object}
+     */
     let manageScreens = {
+        /**
+         * Main game screen, for actually playing the game.
+         * @param {boolean} showTutorial Set to true to show the tutorial overlay
+         */
         gameStart: function(showTutorial : boolean) {
             clearMainContainer();
 
@@ -38,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function(){
             mainContainer.appendChild(mainElement);
 
             if (showTutorial) {
+                //Adding the tutorial overlay
                 let tutorialOverlay = manageScreens.tutorialOverlay({
                     closeTutorial: () => {
                         mainElement.classList.remove('blurred');
@@ -62,6 +78,9 @@ document.addEventListener('DOMContentLoaded', function(){
         /* Note: Basically done purely for convention, there's nothing to do yet that would
          * require an additional function to call this rather than just calling it directly. */
         tutorialOverlay: TutorialOverlay.create.bind(TutorialOverlay),
+        /**
+         * Returns a created game over overlay element with standard event listeners and options.
+         */
         gameOverOverlay: function() {
             return GameOverOverlay.create({
                 restartGame: function() {
@@ -75,6 +94,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 }
             });
         },
+        /**
+         * Switches to the scores screen.
+         */
         showScores: function() {
             clearMainContainer();
             mainContainer.appendChild(ScoresScreen.create({
@@ -83,8 +105,14 @@ document.addEventListener('DOMContentLoaded', function(){
                 }
             }));
         },
+        /**
+         * Swithces to the main menu screen.
+         */
         mainMenu: function() {
             clearMainContainer();
+
+            //Note: We're only showing the tutorial screen on game start if the user has not
+            //played the game yet.
             let firstRun = DataStore.getPlayedCount() <= 0;
             mainContainer.appendChild(MainScreen.create({
                 gameStartButtonPress: () => {
@@ -100,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }
     };
 
+    //Start off the game by switching to the main menu.
     manageScreens.mainMenu();
 
 });
